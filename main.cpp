@@ -87,9 +87,13 @@ void handleIRCRegistration(int socket) {
     std::string nickname;
     std::string username;
 
+    std::cout << "Waiting for client registration\n";
     // Read and parse NICK and USER commands
     while (nickname.empty() || username.empty()) {
         int read_val = read(socket, buffer, sizeof(buffer) - 1);
+        std::cout << "Received: [";
+        printHexRepresentation(buffer, read_val);
+        std::cout << "]" << std::endl;
         if (read_val > 0) {
             buffer[read_val] = '\0'; // Null-terminate the string
 
@@ -110,7 +114,7 @@ void handleIRCRegistration(int socket) {
             throw std::runtime_error("Client disconnected or read failed during registration.");
         }
     }
-
+    std::cout << "Nickname: " << nickname << ", Username: " << username << std::endl;
     std::string welcome = ":server 001 " + nickname + " :Welcome to the IRC network, " + nickname + "!\r\n";
     send(socket, welcome.c_str(), welcome.size(), 0);
 }
@@ -120,8 +124,10 @@ int main() {
     int server_fd = initializeServerSocket(address);
     int new_socket = acceptClient(server_fd, address);
 
+    std::cout << "Client connected\n";
     try {
         handleIRCRegistration(new_socket);
+        std::cout << "Registration complete\n";
         echoMessages(new_socket);
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
