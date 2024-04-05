@@ -1,3 +1,4 @@
+
 NAME		= ircserv
 SRCS		= main.cpp
 
