@@ -1,36 +1,28 @@
-# Compiler and compiler flags
-CC=c++
-CFLAGS=-Wall -std=c++98 -pthread
 
-# Program name
-NAME=ircserv
+NAME		= ircserv
+SRCS		= main.cpp
 
-# Source files
-SRCS=main.cpp Server.cpp ClientSession.cpp
+OBJS		= $(SRCS:%.cpp=%.o)
+CXXFLAGS	= -Wall -Wextra -Werror -std=c++98
+# CXXFLAGS	+= -g3
 
-# Object files
-OBJS=$(SRCS:.cpp=.o)
-
-# Standard all target
-all: $(NAME)
-
-# Linking the program
-$(NAME): $(OBJS)
-	$(CC) $(CFLAGS) -o $(PROGRAMNAME) $(OBJS)
-
-# This rule tells make how to build .o files from .cpp files
+RM			+= -f
 %.o: %.cpp
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-# Clean target - removes object files
+$(NAME): $(OBJS)
+	$(CXX) $(CXXFLAGS) $^ -o $@
+
+.PHONY:		all clean fclean re
+
+all:		$(NAME)
+
 clean:
-	rm -f $(OBJS)
+			$(RM) $(OBJS)
 
-# Full Clean (fclean) target - removes object files and program
-fclean: clean
-	rm -f $(PROGRAMNAME)
+fclean:
+			make clean
+			$(RM) $(NAME)
 
-# Rebuild target - makes fclean followed by all
-re: fclean all
-
-.PHONY: all clean fclean re
+re:	fclean
+	$(MAKE) all
