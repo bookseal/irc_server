@@ -6,16 +6,29 @@
 #include <unistd.h> // For close function
 #include <cstring>  // For memset
 #include <sstream>  // For istringstream
+#include <pthread.h>
 
 class IRCServer {
 public:
     IRCServer(int port) : serverSocket(port) {};
     void run();
+    static void *handleClient(void *socket);
+
     void printHexRepresentation(const char* buffer, int length);
     void echoMessages(int socket);
 
+
 private:
+
     ServerSocket serverSocket;
+};
+
+struct ClientData {
+    int socket;
+    IRCServer* serverInstance;
+
+    ClientData(int socket, IRCServer* serverInstance)
+            : socket(socket), serverInstance(serverInstance) {}
 };
 
 void IRCServer::run() {
@@ -33,16 +46,34 @@ void IRCServer::run() {
             continue; // Optionally, add a way to break out of this loop
         }
 
-        std::cout << "Client connected\n";
-        try {
-            std::cout << "Registration complete\n";
-            echoMessages(clientSocket);
-        } catch (const std::exception& e) {
-            std::cerr << "Error: " << e.what() << std::endl;
+        ClientData *data = new ClientData(clientSocket, this);
+        pthread_t clientThread;
+        if (pthread_create(&clientThread, NULL, handleClient, data) != 0) {
+            std::cerr << "Failed to create client thread." << std::endl;
+            delete data;
+            continue;
         }
 
-        close(clientSocket);
+        pthread_detach(clientThread);
     }
+}
+
+void* IRCServer::handleClient(void *arg) {
+    ClientData *data = static_cast<ClientData*>(arg);
+    int clientSocket = data->socket;
+    IRCServer* serverInstance = data->serverInstance;
+
+    std::cout << "Client connected\n";
+    try {
+        std::cout << "Registration complete\n";
+        serverInstance->echoMessages(clientSocket);
+    } catch (const std::exception& e) {
+        std::cerr << "Error: " << e.what() << std::endl;
+    }
+
+    close(clientSocket);
+    delete data; // Clean up the data allocation
+    return NULL;
 }
 
 void IRCServer::printHexRepresentation(const char *buffer, int length) {
