@@ -20,6 +20,7 @@ public:
     ~ServerSocket();
     int initialize();
     int acceptClient();
+    int getFD() const;
 
 private:
     int server_fd;
@@ -75,4 +76,9 @@ int ServerSocket::acceptClient() {
     }
     return new_socket;
 }
+
+int ServerSocket::getFD() const {
+    return server_fd;
+}
+
 #endif
