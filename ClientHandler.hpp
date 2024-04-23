@@ -49,6 +49,7 @@ void ClientHandler::handleDisconnect() {
 }
 
 void ClientHandler::sendMessage(const std::string& message) {
+    std::cout << "Sending: " << message << std::endl;
     if (send(clientSocket, message.c_str(), message.size(), 0) == -1) {
         std::cerr << "Failed to send message." << std::endl;
     }
@@ -80,7 +81,8 @@ void ClientHandler::handleNickCommand(const std::string& parameters) {
 }
 
 void ClientHandler::handleUserCommand(const std::string& parameters) {
-    username = parameters;
+    size_t spacePos = parameters.find(' ');
+    username = parameters.substr(0, spacePos);
     sendMessage(":Server NOTICE " + username + " :Username set to " + username + "\r\n");
 }
 
