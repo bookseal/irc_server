@@ -1,6 +1,8 @@
 
 NAME		= ircserv
-SRCS		= main.cpp
+SRCS		= main.cpp \
+				IRCServer.cpp \
+				ClientHandler.cpp \
 
 OBJS		= $(SRCS:%.cpp=%.o)
 #CXXFLAGS	= -Wall -Wextra -Werror -std=c++98
