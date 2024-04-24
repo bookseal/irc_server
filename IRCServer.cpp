@@ -1,5 +1,6 @@
 #include "IRCServer.hpp"
 #include "ClientHandler.hpp"
+#include "Channel.hpp"
 
 IRCServer::IRCServer(int port) : port(port), serverSocket(-1) {}
 
@@ -131,3 +132,31 @@ void IRCServer::unregisterNickname(const std::string& nickname) {
 void IRCServer::unregisterUsername(const std::string& username) {
     activeUsernames.erase(username);
 }
+
+ClientHandler* IRCServer::findClientHandlerByNickname(const std::string& nickname) {
+    std::map<std::string, ClientHandler*>::iterator it = activeNicknames.find(nickname);
+    if (it != activeNicknames.end()) {
+        return it->second;
+    }
+    return NULL; // Return NULL if the nickname is not found
+}
+
+void IRCServer::createChannel(const std::string& name) {
+    if (channels.find(name) == channels.end()) {
+        channels[name] = new Channel(name);
+    }
+}
+
+void IRCServer::deleteChannel(const std::string& name) {
+    std::map<std::string, Channel*>::iterator it = channels.find(name);
+    if (it != channels.end() && it->second->isEmpty()) {
+        delete it->second;  // Delete the channel object
+        channels.erase(it); // Remove the entry from the map
+    }
+}
+
+Channel* IRCServer::findChannel(const std::string& name) {
+    std::map<std::string, Channel*>::iterator it = channels.find(name);
+    return it != channels.end() ? it->second : NULL;
+}
+
