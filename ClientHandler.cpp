@@ -24,22 +24,19 @@ void ClientHandler::processInput() {
     }
 }
 
-void ClientHandler::handleDisconnect() {
-    deactivate();
-}
-
-void ClientHandler::sendMessage(const std::string& message) {
-    std::cout << "Sending: " << message << std::endl;
-    if (send(clientSocket, message.c_str(), message.size(), 0) == -1) {
-        std::cerr << "Failed to send message." << std::endl;
-    }
-}
-
 void ClientHandler::processCommand(const std::string& fullCommand) {
-    size_t spacePos = fullCommand.find(' ');
-    std::string command = fullCommand.substr(0, spacePos);
-    std::string parameters = (spacePos != std::string::npos) ? fullCommand.substr(spacePos + 1) : "";
+    // Trim trailing newline and carriage return characters
+    std::string trimmedCommand = fullCommand;
+    trimmedCommand.erase(std::remove(trimmedCommand.begin(), trimmedCommand.end(), '\r'), trimmedCommand.end());
+    trimmedCommand.erase(std::remove(trimmedCommand.begin(), trimmedCommand.end(), '\n'), trimmedCommand.end());
 
+    // Find the first space to separate the command from parameters
+    size_t spacePos = trimmedCommand.find(' ');
+    std::string command = (spacePos != std::string::npos) ? trimmedCommand.substr(0, spacePos) : trimmedCommand;
+    std::string parameters = (spacePos != std::string::npos) ? trimmedCommand.substr(spacePos + 1) : "";
+
+    std::cout << "Command: " << command << ", Parameters: " << parameters << std::endl;
+    // Process the command with the clean parameters
     parseCommand(command, parameters);
 }
 
@@ -53,36 +50,39 @@ void ClientHandler::parseCommand(const std::string& command, const std::string& 
     } else if (command == "PART") {
         handleLeaveCommand(parameters);
     } else if (command == "PRIVMSG") {
-        // Determine if the message is intended for a channel or a user
-        size_t spacePos = parameters.find(' ');
-        if (spacePos == std::string::npos) {
-            sendMessage(":Server ERROR :Invalid PRIVMSG format.\r\n");
-            return;
-        }
-
-        std::string target = parameters.substr(0, spacePos);
-        if (!target.empty() && target[0] == '#') {
-            // It's a channel message
-            std::string message = parameters.substr(spacePos + 1);
-            handleChannelMessage(target, message);
-        } else {
-            // It's a private message to another user
-            handlePrivMsgCommand(parameters);
-        }
+        handleChannelMessage(currentChannel, parameters);
     } else {
-        // If the command is not recognized
-        sendMessage(":Server ERROR :Unknown command.\r\n");
+        defaultMessageHandling(parameters);
+    }
+}
+
+void ClientHandler::defaultMessageHandling(const std::string& message) {
+    if (!currentChannel.empty()) {
+        // Assumes the client has a current channel stored
+        handleChannelMessage(currentChannel, message);
+    } else {
+        sendMessage(":Server ERROR :No channel selected or unrecognized command.\r\n");
+    }
+}
+
+void ClientHandler::handleDisconnect() {
+    deactivate();
+}
+
+void ClientHandler::sendMessage(const std::string& message) {
+    std::cout << "Sending: " << message << std::endl;
+    if (send(clientSocket, message.c_str(), message.size(), 0) == -1) {
+        std::cerr << "Failed to send message." << std::endl;
     }
 }
 
 void ClientHandler::handleNickCommand(const std::string& parameters) {
-    std::string newNickname = parameters.substr(0, parameters.size() - 2); // Trim the \r\n
-    if (server->isNicknameAvailable(newNickname)) {
+    if (server->isNicknameAvailable(parameters)) {
         if (!nickname.empty()) {
-            server->unregisterNickname(nickname);
+            server->unregisterNickname(parameters);
         }
-        server->registerNickname(newNickname, this);
-        nickname = newNickname;
+        server->registerNickname(parameters, this);
+        nickname = parameters;
         sendMessage(":Server NOTICE " + nickname + " :Nickname set to " + nickname + "\r\n");
     } else {
         sendMessage(":Server NOTICE " + nickname + " :Nickname is already in use.\r\n");
@@ -105,30 +105,28 @@ void ClientHandler::handleUserCommand(const std::string& parameters) {
 }
 
 void ClientHandler::handleJoinCommand(const std::string& parameters) {
-    std::string channelName = parameters.substr(0, parameters.size() - 2);
-    Channel* channel = server->findChannel(channelName);
-    if (!channel) {
-        server->createChannel(channelName);
-        channel = server->findChannel(channelName);
-        sendMessage(":Server NOTICE " + username + " :Channel " + channelName + " created and joined.\r\n");
-    } else {
-        sendMessage(":Server NOTICE " + username + "  :Joined existing channel " + channelName + ".\r\n");
+    Channel* channel = server->findChannel(parameters);
+    if (channel == nullptr) {
+        server->createChannel(parameters);
+        channel = server->findChannel(parameters);
     }
-    channel->addClient(this);
+    if (channel) {
+        channel->addClient(this);
+        currentChannel = parameters;  // Update current channel
+        sendMessage(":Server NOTICE " + nickname + " :Joined channel " + parameters + "\r\n");
+    }
 }
 
 void ClientHandler::handleLeaveCommand(const std::string& parameters) {
-    std::string channelName = parameters.substr(0, parameters.size() - 2);
-    Channel* channel = server->findChannel(channelName);
+    Channel* channel = server->findChannel(parameters);
     if (channel) {
         channel->removeClient(this);
-        sendMessage(":Server NOTICE " + username + " :You have left the channel " + channelName + ".\r\n");
-        if (channel->isEmpty()) {
-            server->deleteChannel(channelName);
-            sendMessage(":Server NOTICE " + username + " :Channel " + channelName + " deleted.\r\n");
+        if (parameters == currentChannel) {
+            currentChannel.clear();  // Clear current channel if it's the one being left
         }
+        sendMessage(":Server NOTICE " + nickname + " :Left channel " + parameters + "\r\n");
     } else {
-        sendMessage(":Server NOTICE " + username + " :Channel " + channelName + " does not exist.\r\n");
+        sendMessage(":Server ERROR :No such channel " + parameters + "\r\n");
     }
 }
 
@@ -136,37 +134,30 @@ void ClientHandler::handleLeaveCommand(const std::string& parameters) {
 void ClientHandler::handlePrivMsgCommand(const std::string& parameters) {
     size_t spacePos = parameters.find(' ');
     if (spacePos == std::string::npos) {
-        sendMessage(":Server ERROR :Invalid message format.\r\n");
+        sendMessage(":Server ERROR :Invalid PRIVMSG format.\r\n");
         return;
     }
 
-    std::string recipient = parameters.substr(0, spacePos);
+    std::string target = parameters.substr(0, spacePos);
     std::string message = parameters.substr(spacePos + 1);
 
-    // Check if the recipient exists
-    ClientHandler* recipientHandler = server->findClientHandlerByNickname(recipient);
-    if (recipientHandler) {
-        recipientHandler->sendMessage(": " + nickname + "!user@host PRIVMSG " + recipient + " :" + message + "\r\n");
+    if (!target.empty() && target[0] == '#') {
+        handleChannelMessage(target, message);
     } else {
-        sendMessage(":Server NOTICE :User " + recipient + " does not exist.\r\n");
+        // Handling private messages to a user
+        std::string fullMessage = ": " + nickname + "!user@host PRIVMSG " + target + " :" + message + "\r\n";
+        // Assume server can find and forward to the user
+        server->sendMessageToUser(target, fullMessage);
     }
 }
+
 
 void ClientHandler::handleChannelMessage(const std::string& channelName, const std::string& message) {
-    if (channelName.empty() || message.empty()) {
-        sendMessage(":Server ERROR :Invalid channel or message.\r\n");
-        return;
-    }
-
     Channel* channel = server->findChannel(channelName);
-    if (channel) {
-        if (channel->isClientMember(this)) {
-            std::string fullMessage = ": " + nickname + "!user@host PRIVMSG " + channelName + " :" + message + "\r\n";
-            channel->broadcastMessage(fullMessage, this);
-        } else {
-            sendMessage(":Server NOTICE :You are not a member of the channel " + channelName + ".\r\n");
-        }
+    if (channel && channel->isClientMember(this)) {
+        channel->broadcastMessage(": " + nickname + "!" + username + " PRIVMSG " + channelName + " :" + message + "\r\n", this);
     } else {
-        sendMessage(":Server NOTICE :Channel " + channelName + " does not exist.\r\n");
+        sendMessage(":Server ERROR :You are not in channel " + channelName + "\r\n");
     }
 }
+

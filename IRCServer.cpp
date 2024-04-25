@@ -160,3 +160,15 @@ Channel* IRCServer::findChannel(const std::string& name) {
     return it != channels.end() ? it->second : NULL;
 }
 
+void IRCServer::sendMessageToUser(const std::string& nickname, const std::string& message) {
+    if (activeNicknames.count(nickname) > 0) { // Check if the nickname exists in the map
+        ClientHandler* handler = activeNicknames[nickname];
+        if (handler) {
+            handler->sendMessage(message);
+        } else {
+            std::cerr << "Handler for nickname '" << nickname << "' not found." << std::endl;
+        }
+    } else {
+        std::cerr << "No user with nickname '" << nickname << "' found." << std::endl;
+    }
+}

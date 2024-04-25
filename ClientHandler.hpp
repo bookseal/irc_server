@@ -25,8 +25,10 @@ private:
     bool active;
     std::string nickname;
     std::string username;
+    std::string currentChannel;
 
     void processCommand(const std::string& fullCommand);
+    void defaultMessageHandling(const std::string& message);
     void parseCommand(const std::string& command, const std::string& parameters);
     void handleNickCommand(const std::string& parameters);
     void handleUserCommand(const std::string& parameters);

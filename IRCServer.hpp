@@ -35,7 +35,7 @@ public:
     void deleteChannel(const std::string& channelName);
     Channel* findChannel(const std::string& channelName);
 
-
+    void sendMessageToUser(const std::string& nickname, const std::string& message);
 
 private:
     int port;
