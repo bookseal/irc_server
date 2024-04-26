@@ -6,6 +6,7 @@
 #include <map>
 
 class ClientHandler; // Forward declaration
+class IRCServer; // Forward declaration
 
 class Channel {
 public:

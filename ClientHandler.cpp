@@ -1,5 +1,5 @@
-#include "ClientHandler.hpp"
 #include "IRCServer.hpp"
+#include "ClientHandler.hpp"
 #include "Channel.hpp"
 
 ClientHandler::ClientHandler(int socket, IRCServer *server) : clientSocket(socket), server(server), active(true) {
@@ -35,8 +35,6 @@ void ClientHandler::processCommand(const std::string& fullCommand) {
     std::string command = (spacePos != std::string::npos) ? trimmedCommand.substr(0, spacePos) : trimmedCommand;
     std::string parameters = (spacePos != std::string::npos) ? trimmedCommand.substr(spacePos + 1) : "";
 
-    std::cout << "Command: " << command << ", Parameters: " << parameters << std::endl;
-    // Process the command with the clean parameters
     parseCommand(command, parameters);
 }
 
@@ -52,18 +50,28 @@ void ClientHandler::parseCommand(const std::string& command, const std::string& 
     } else if (command == "PRIVMSG") {
         handleChannelMessage(currentChannel, parameters);
     } else {
-        defaultMessageHandling(parameters);
+        defaultMessageHandling(command + " " + parameters);
     }
 }
 
 void ClientHandler::defaultMessageHandling(const std::string& message) {
     if (!currentChannel.empty()) {
-        // Assumes the client has a current channel stored
         handleChannelMessage(currentChannel, message);
     } else {
         sendMessage(":Server ERROR :No channel selected or unrecognized command.\r\n");
     }
 }
+
+void ClientHandler::handleChannelMessage(const std::string& channelName, const std::string& message) {
+    std::cout << "Channel message: " << message << std::endl;
+    Channel* channel = server->findChannel(channelName);
+    if (channel && channel->isClientMember(this)) {
+        channel->broadcastMessage(": " + nickname + "!" + username + " PRIVMSG " + channelName + " :" + message + "\r\n", this);
+    } else {
+        sendMessage(":Server ERROR :You are not in channel " + channelName + "\r\n");
+    }
+}
+
 
 void ClientHandler::handleDisconnect() {
     deactivate();
@@ -148,16 +156,6 @@ void ClientHandler::handlePrivMsgCommand(const std::string& parameters) {
         std::string fullMessage = ": " + nickname + "!user@host PRIVMSG " + target + " :" + message + "\r\n";
         // Assume server can find and forward to the user
         server->sendMessageToUser(target, fullMessage);
-    }
-}
-
-
-void ClientHandler::handleChannelMessage(const std::string& channelName, const std::string& message) {
-    Channel* channel = server->findChannel(channelName);
-    if (channel && channel->isClientMember(this)) {
-        channel->broadcastMessage(": " + nickname + "!" + username + " PRIVMSG " + channelName + " :" + message + "\r\n", this);
-    } else {
-        sendMessage(":Server ERROR :You are not in channel " + channelName + "\r\n");
     }
 }
 

@@ -6,8 +6,8 @@
 #include <unistd.h>
 #include <sys/socket.h>
 
-class IRCServer;
 class Channel;
+class IRCServer;
 
 class ClientHandler {
 public:
@@ -18,6 +18,8 @@ public:
     bool isActive() const { return active; }
     void deactivate() { active = false; }
     void handleDisconnect();
+    std::string getNickname() const { return nickname; };
+    IRCServer *getServer() { return server; }
 
 private:
     IRCServer *server;

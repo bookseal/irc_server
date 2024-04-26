@@ -1,4 +1,5 @@
 #include "Channel.hpp"
+#include "IRCServer.hpp"
 #include "ClientHandler.hpp"
 
 Channel::Channel(const std::string& name) : name(name) {
@@ -24,14 +25,14 @@ bool Channel::isClientMember(ClientHandler* client) const {
 }
 
 void Channel::broadcastMessage(const std::string& message, ClientHandler* sender) {
-    std::map<ClientHandler*, bool>::iterator it;  // Correct non-const iterator
+    std::map<ClientHandler*, bool>::iterator it;
     for (it = clients.begin(); it != clients.end(); ++it) {
-        if (it->first != sender) {  // Don't send the message back to the sender
-            it->first->sendMessage(message);
+        if (it->first != sender) {
+            std::string nickname = it->first->getNickname(); // Assuming you have a getNickname method
+            sender->getServer()->sendMessageToUser(nickname, message); // Assuming ClientHandler can access its server
         }
     }
 }
-
 
 bool Channel::isEmpty() const {
     return clients.empty();
