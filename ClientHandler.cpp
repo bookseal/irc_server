@@ -3,7 +3,10 @@
 #include "Channel.hpp"
 
 ClientHandler::ClientHandler(int socket, IRCServer *server) : clientSocket(socket), server(server), active(true) {
-
+    // Welcome message
+    sendMessage(":Server NOTICE :Welcome to the IRC server!\r\n");
+    // send message to choose nickname
+    sendMessage(":Server ERROR :Please choose a nickname with the NICK command.\r\n");
 }
 
 ClientHandler::~ClientHandler() {
@@ -49,12 +52,19 @@ void ClientHandler::parseCommand(const std::string& command, const std::string& 
         handleLeaveCommand(parameters);
     } else if (command == "PRIVMSG") {
         handleChannelMessage(currentChannel, parameters);
+    } else if (command == "CAP") {
+        ;
     } else {
         defaultMessageHandling(command + " " + parameters);
     }
 }
 
 void ClientHandler::defaultMessageHandling(const std::string& message) {
+    if (nickname.empty()) {
+        sendMessage(":Server ERROR :Please choose a nickname with the NICK command.\r\n");
+        return;
+    }
+
     if (!currentChannel.empty()) {
         handleChannelMessage(currentChannel, message);
     } else {
@@ -71,7 +81,6 @@ void ClientHandler::handleChannelMessage(const std::string& channelName, const s
         sendMessage(":Server ERROR :You are not in channel " + channelName + "\r\n");
     }
 }
-
 
 void ClientHandler::handleDisconnect() {
     deactivate();
@@ -98,6 +107,11 @@ void ClientHandler::handleNickCommand(const std::string& parameters) {
 }
 
 void ClientHandler::handleUserCommand(const std::string& parameters) {
+    if (nickname.empty()) {
+        sendMessage(":Server ERROR :Please choose a nickname with the NICK command.\r\n");
+        return;
+    }
+
     size_t spacePos = parameters.find(' ');
     std::string newUsername = parameters.substr(0, spacePos);
     if (server->isUsernameAvailable(newUsername)) {
@@ -113,6 +127,11 @@ void ClientHandler::handleUserCommand(const std::string& parameters) {
 }
 
 void ClientHandler::handleJoinCommand(const std::string& parameters) {
+    if (nickname.empty()) {
+        sendMessage(":Server ERROR :Please choose a nickname with the NICK command.\r\n");
+        return;
+    }
+
     Channel* channel = server->findChannel(parameters);
     if (channel == nullptr) {
         server->createChannel(parameters);
@@ -126,6 +145,11 @@ void ClientHandler::handleJoinCommand(const std::string& parameters) {
 }
 
 void ClientHandler::handleLeaveCommand(const std::string& parameters) {
+    if (nickname.empty()) {
+        sendMessage(":Server ERROR :Please choose a nickname with the NICK command.\r\n");
+        return;
+    }
+
     Channel* channel = server->findChannel(parameters);
     if (channel) {
         channel->removeClient(this);
@@ -140,6 +164,11 @@ void ClientHandler::handleLeaveCommand(const std::string& parameters) {
 
 
 void ClientHandler::handlePrivMsgCommand(const std::string& parameters) {
+    if (nickname.empty()) {
+        sendMessage(":Server ERROR :Please choose a nickname with the NICK command.\r\n");
+        return;
+    }
+
     size_t spacePos = parameters.find(' ');
     if (spacePos == std::string::npos) {
         sendMessage(":Server ERROR :Invalid PRIVMSG format.\r\n");
