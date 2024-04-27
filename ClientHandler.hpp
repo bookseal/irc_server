@@ -34,11 +34,11 @@ private:
     void parseCommand(const std::string& command, const std::string& parameters);
     void handleNickCommand(const std::string& parameters);
     void handleUserCommand(const std::string& parameters);
-    void handlePrivMsgCommand(const std::string& parameters);
-
     void handleJoinCommand(const std::string& parameters);
     void handleLeaveCommand(const std::string& parameters);
     void handleChannelMessage(const std::string& channelName, const std::string& message);
+    void handlePrivMsgCommand(const std::string& parameters);
+    void handleCapCommand(const std::string& parameters);
 };
 
 #endif // CLIENT_HANDLER_HPP

@@ -160,15 +160,27 @@ Channel* IRCServer::findChannel(const std::string& name) {
     return it != channels.end() ? it->second : NULL;
 }
 
-void IRCServer::sendMessageToUser(const std::string& nickname, const std::string& message) {
-    if (activeNicknames.count(nickname) > 0) { // Check if the nickname exists in the map
-        ClientHandler* handler = activeNicknames[nickname];
-        if (handler) {
-            handler->sendMessage(message);
+void IRCServer::sendMessageToUser(const std::string& senderNickname, const std::string& recipientNickname, const std::string& message) {
+    std::cout << "senderNickname   : " << senderNickname << std::endl;
+    std::cout << "recipientNickname: " << recipientNickname << std::endl;
+    std::cout << "message          : " << message << "\n";
+    if (activeNicknames.count(recipientNickname) > 0) { // Check if the recipient nickname exists in the map
+        ClientHandler* recipientHandler = activeNicknames[recipientNickname];
+        if (recipientHandler) {
+            recipientHandler->sendMessage(message);
         } else {
-            std::cerr << "Handler for nickname '" << nickname << "' not found." << std::endl;
+            std::cerr << "Handler for nickname '" << recipientNickname << "' not found." << std::endl;
+            ClientHandler* senderHandler = activeNicknames[senderNickname];
+            if (senderHandler) {
+                senderHandler->sendMessage(":Server ERROR :Internal error, recipient handler not found.\r\n");
+            }
         }
     } else {
-        std::cerr << "No user with nickname '" << nickname << "' found." << std::endl;
+        std::cerr << "No user with nickname '" << recipientNickname << "' found." << std::endl;
+        ClientHandler* senderHandler = activeNicknames[senderNickname];
+        if (senderHandler) {
+            senderHandler->sendMessage(":Server ERROR :No such nick/channel.\r\n");
+        }
     }
 }
+

@@ -19,6 +19,7 @@ public:
     bool isClientMember(ClientHandler* client) const;
     void broadcastMessage(const std::string& message, ClientHandler* sender);
     bool isEmpty() const;
+    std::string getChannelName() const { return name; }
 
 private:
     std::string name;

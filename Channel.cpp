@@ -29,7 +29,7 @@ void Channel::broadcastMessage(const std::string& message, ClientHandler* sender
     for (it = clients.begin(); it != clients.end(); ++it) {
         if (it->first != sender) {
             std::string nickname = it->first->getNickname(); // Assuming you have a getNickname method
-            sender->getServer()->sendMessageToUser(nickname, message); // Assuming ClientHandler can access its server
+            sender->getServer()->sendMessageToUser(sender->getNickname(), nickname, message);
         }
     }
 }
