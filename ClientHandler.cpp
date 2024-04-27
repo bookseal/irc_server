@@ -105,7 +105,7 @@ void ClientHandler::handlePrivMsgCommand(const std::string& parameters) {
 
     // Extract the target and message from the parameters
     std::string target = parameters.substr(0, spacePos);
-    std::string message = parameters.substr(spacePos + 1);
+    std::string message = parameters.substr(spacePos + 2);
     // Check if the target is a channel or a user
     if (!target.empty() && target[0] == '#') {
         handleChannelMessage(target, message);

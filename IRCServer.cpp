@@ -164,10 +164,11 @@ void IRCServer::sendMessageToUser(const std::string& senderNickname, const std::
     std::cout << "senderNickname   : " << senderNickname << std::endl;
     std::cout << "recipientNickname: " << recipientNickname << std::endl;
     std::cout << "message          : " << message << "\n";
+    std::string newMessage = ":" + senderNickname + "!user@host PRIVMSG " + recipientNickname + " :" + message;
     if (activeNicknames.count(recipientNickname) > 0) { // Check if the recipient nickname exists in the map
         ClientHandler* recipientHandler = activeNicknames[recipientNickname];
         if (recipientHandler) {
-            recipientHandler->sendMessage(message);
+            recipientHandler->sendMessage(newMessage);
         } else {
             std::cerr << "Handler for nickname '" << recipientNickname << "' not found." << std::endl;
             ClientHandler* senderHandler = activeNicknames[senderNickname];
