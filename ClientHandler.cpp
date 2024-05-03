@@ -84,7 +84,6 @@ void ClientHandler::handleModeCommand(const std::string& parameters) {
 }
 
 void ClientHandler::handlePrivMsgCommand(const std::string& parameters) {
-    // FIXING private message
     size_t spacePos = std::string::npos;
     for (size_t i = 0; i < parameters.size(); ++i) {
         if (parameters[i] == ' ') {
