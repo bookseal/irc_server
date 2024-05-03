@@ -5,6 +5,8 @@
 #include <string>
 #include <unistd.h>
 #include <sys/socket.h>
+#include <sstream>
+
 
 class Channel;
 class IRCServer;
@@ -27,6 +29,7 @@ private:
     bool active;
     std::string nickname;
     std::string username;
+    std::string hostname;
     std::string currentChannel;
 
     void processCommand(const std::string& fullCommand);
@@ -38,7 +41,7 @@ private:
     void handleLeaveCommand(const std::string& parameters);
     void handleChannelMessage(const std::string& channelName, const std::string& message);
     void handlePrivMsgCommand(const std::string& parameters);
-    void handleCapCommand(const std::string& parameters);
+    void handleModeCommand(const std::string& parameters);
 };
 
 #endif // CLIENT_HANDLER_HPP
