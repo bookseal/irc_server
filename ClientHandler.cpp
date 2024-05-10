@@ -165,15 +165,12 @@ void ClientHandler::handleUserCommand(const std::string& parameters) {
 }
 
 void ClientHandler::handleJoinCommand(const std::string& parameters) {
-    if (currentChannel == parameters) {
+    if (channels.find(parameters) != channels.end()) {
         sendMessage(":Server ERROR :You are already in channel " + parameters + "\r\n");
         return;
     }
-    if (!currentChannel.empty()) {
-        handleLeaveCommand(currentChannel);
-    }
     if (parameters == ":" || parameters.empty()) {
-        sendMessage(":irc.local 451 * JOIN :You have not registered.");
+        sendMessage(":irc.local 451 * JOIN :You have not specified a channel name.");
         return;
     }
     Channel* channel = server->findChannel(parameters);
@@ -183,28 +180,34 @@ void ClientHandler::handleJoinCommand(const std::string& parameters) {
     }
     if (channel) {
         channel->addClient(this);
-        currentChannel = parameters;
+        channels.insert(parameters);
         sendMessage(":" + nickname + "!" + username + "@" + hostname + " JOIN :" + parameters);
-        sendMessage(":irc.local 353 " + nickname + " = " + parameters + " :@" + nickname);
-        sendMessage(":irc.local 366 " + nickname + " " + parameters + " :End of /NAMES list.");
+        // Send other necessary channel messages
     }
 }
 
 void ClientHandler::handleLeaveCommand(const std::string& parameters) {
+    if (channels.find(parameters) == channels.end()) {
+        sendMessage(":Server ERROR :You are not in channel " + parameters + "\r\n");
+        return;
+    }
     Channel* channel = server->findChannel(parameters);
-    std::cout << "parameters: " << parameters << std::endl;
     if (channel) {
         channel->removeClient(this);
-        if (parameters == currentChannel) {
-            currentChannel.clear();
-            sendMessage(":" + nickname + "!" + username + "@" + hostname + " PART :" + parameters);
-        }
-    } else {
-        sendMessage(":Server ERROR :No such channel " + parameters + "\r\n");
+        channels.erase(parameters);
+        sendMessage(":" + nickname + "!" + username + "@" + hostname + " PART :" + parameters);
     }
 }
 
 void ClientHandler::handleDisconnect() {
+    std::set<std::string>::iterator it;
+    for (it = channels.begin(); it != channels.end(); ++it) {
+        const std::string& channelName = *it;
+        Channel* channel = server->findChannel(channelName);
+        if (channel) {
+            channel->removeClient(this);
+        }
+    }
     deactivate();
 }
 

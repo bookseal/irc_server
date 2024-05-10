@@ -6,7 +6,7 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <sstream>
-
+#include <set>
 
 class Channel;
 class IRCServer;
@@ -31,6 +31,7 @@ private:
     std::string username;
     std::string hostname;
     std::string currentChannel;
+    std::set<std::string> channels;
 
     void processCommand(const std::string& fullCommand);
     void defaultMessageHandling(const std::string& message);
