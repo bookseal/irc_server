@@ -23,6 +23,7 @@ public:
     void broadcastMessage(const std::string& message, ClientHandler* sender);
     bool isEmpty() const;
     std::string getChannelName() const { return name; }
+    std::string getClientList() const;
 
 private:
     std::string name;

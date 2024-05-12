@@ -182,7 +182,12 @@ void ClientHandler::handleJoinCommand(const std::string& parameters) {
         channel->addClient(this);
         channels.insert(parameters);
         sendMessage(":" + nickname + "!" + username + "@" + hostname + " JOIN :" + parameters);
-        // Send other necessary channel messages
+        //:irc.local 353 nick1 = #test :@nick1
+        std::string message;
+        message = ":Server 353 " + nickname + " = " + parameters + " :";
+        message += channel->getClientList();
+        sendMessage(message);
+        sendMessage(":Server 366 " + nickname + " " + parameters + " :End of /NAMES list.");
     }
 }
 

@@ -13,7 +13,6 @@ const std::string& Channel::getName() const {
 
 void Channel::addClient(ClientHandler* client) {
     clients.insert(std::make_pair(client, true));
-    // Automatically assign the first visitor as operator if there are no operators yet
     if (operators.empty()) {
         addOperator(client);
     }
@@ -56,4 +55,20 @@ void Channel::broadcastMessage(const std::string& message, ClientHandler* sender
 
 bool Channel::isEmpty() const {
     return clients.empty();
+}
+
+std::string Channel::getClientList() const {
+    std::string list;
+    std::map<ClientHandler*, bool>::const_iterator it;
+    for (it = clients.begin(); it != clients.end(); ++it) {
+        if (it->second && isOperator(it->first)) {
+            list += "@";
+        }
+        else
+        {
+            list += " ";
+        }
+        list += it->first->getNickname() + " ";
+    }
+    return list;
 }
