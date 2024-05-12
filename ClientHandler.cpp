@@ -228,10 +228,10 @@ void ClientHandler::handleLeaveCommand(const std::string& parameters) {
 
 void ClientHandler::handleKickCommand(const std::string& parameters) {
   std::string channelName;
-  std::string target;
+  std::string targetName;
   std::istringstream paramStream(parameters);
-  paramStream >> channelName >> target;
-  if (channelName.empty() || target.empty()) {
+  paramStream >> channelName >> targetName;
+  if (channelName.empty() || targetName.empty()) {
     sendMessage(":Server ERROR :Invalid KICK command format.\r\n");
     return;
   }
@@ -239,19 +239,30 @@ void ClientHandler::handleKickCommand(const std::string& parameters) {
   if (channel == nullptr) {
     return;
   }
+  ClientHandler *target = server->findClientHandlerByNickname(targetName);
+
   // kick하는 주체가 그 채널의 operator인지 확인
   if (!channel->isOperator(this)) {
-    sendMessage(":Server ERROR :You are not an operator in channel " +
+    sendMessage("Server ERROR :You are not an operator in channel " +
                 channelName + "\r\n");
     // 그 채널에 target이 있는지 확인
   } else if (channel->isClientMember(
-                 server->findClientHandlerByNickname(target))) {
-    channel->removeClient(server->findClientHandlerByNickname(target));
-    channel->broadcastMessage(
-        ":" + nickname + "!" + username + "@" + hostname + " KICK :" + target,
-        this);
+                 target)) {
+                  channels.erase(targetName);
+    channel->removeClient(target);
+
+     sendMessage(
+      ":" + nickname + "!" + username + "@" + hostname + " KICK " +targetName);
+      sendMessage(
+      ":" + nickname + "!" + username + "@" + hostname + " NOTICE " + channelName + " " + targetName + " has left "+ channelName);
+    // channel->broadcastMessage(
+    //   ":" + nickname + "!" + username + "@" + hostname + " KICK " +targetName,
+    //   this);
+    // channel->broadcastMessage(
+    //   ":" + nickname + "!" + username + "@" + hostname + " NOTICE " + channelName + " " + targetName + " has left "+ channelName,
+    //   this);
   } else {
-    sendMessage(":Server ERROR :" + target + " is not in channel " +
+    sendMessage("Server ERROR :" + targetName + " is not in channel " +
                 channelName + "\r\n");
   }
 }

@@ -3,7 +3,7 @@
 
 #include <sys/socket.h>
 #include <unistd.h>
-
+#include <algorithm>
 #include <iostream>
 #include <set>
 #include <sstream>
