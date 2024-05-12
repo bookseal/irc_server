@@ -246,21 +246,22 @@ void ClientHandler::handleKickCommand(const std::string& parameters) {
     sendMessage("Server ERROR :You are not an operator in channel " +
                 channelName + "\r\n");
     // 그 채널에 target이 있는지 확인
-  } else if (channel->isClientMember(
-                 target)) {
-                  channels.erase(targetName);
-    channel->removeClient(target);
+  } else if (channel->isClientMember(target))
+  {
+      std::string message = ":" + nickname + "!" + username + "@" + hostname + " KICK " + channel->getChannelName() + " " + targetName;
+      sendMessage(message);
+      channel->broadcastMessage(message, this);
+      channel->removeClient(target);
 
-     sendMessage(
-      ":" + nickname + "!" + username + "@" + hostname + " KICK " +targetName);
-      sendMessage(
-      ":" + nickname + "!" + username + "@" + hostname + " NOTICE " + channelName + " " + targetName + " has left "+ channelName);
-    // channel->broadcastMessage(
-    //   ":" + nickname + "!" + username + "@" + hostname + " KICK " +targetName,
-    //   this);
-    // channel->broadcastMessage(
-    //   ":" + nickname + "!" + username + "@" + hostname + " NOTICE " + channelName + " " + targetName + " has left "+ channelName,
-    //   this);
+//      channels.erase(targetName);
+//     sendMessage(
+//      ":" + nickname + "!" + username + "@" + hostname + " KICK " +targetName);
+//      sendMessage(
+//      ":" + nickname + "!" + username + "@" + hostname + " NOTICE " + channelName + " " + targetName + " has left "+ channelName);
+
+      // channel->broadcastMessage(
+      //   ":" + nickname + "!" + username + "@" + hostname + " NOTICE " + channelName + " " + targetName + " has left "+ channelName,
+      //   this);
   } else {
     sendMessage("Server ERROR :" + targetName + " is not in channel " +
                 channelName + "\r\n");
