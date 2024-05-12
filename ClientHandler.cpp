@@ -248,7 +248,7 @@ void ClientHandler::handleKickCommand(const std::string& parameters) {
                  server->findClientHandlerByNickname(target))) {
     channel->removeClient(server->findClientHandlerByNickname(target));
     channel->broadcastMessage(":" + nickname + "!" + username + "@" + hostname +
-                                  " KICK " + channelName + " " + target,
+                                  " KICK :" + channelName + " " + target,
                               this);
   } else {
     sendMessage(":Server ERROR :" + target + " is not in channel " +
