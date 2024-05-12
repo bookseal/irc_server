@@ -76,8 +76,8 @@ void ClientHandler::handleModeCommand(const std::string& parameters) {
     if (mode == nickname) {
         sendMessage(":" + nickname + "!" + username + "@" + hostname + " MODE " + nickname + " :+i");
     } else if (mode == currentChannel) {
-        sendMessage(":irc.local 324 " + nickname + " " + currentChannel + " :+nt");
-        sendMessage(":irc.local 329 " + nickname + " " + currentChannel + " :");
+        sendMessage(":Server 324 " + nickname + " " + currentChannel + " :+nt");
+        sendMessage(":Server 329 " + nickname + " " + currentChannel + " :");
     } else {
         sendMessage(":Server ERROR :You can only set modes for yourself.\r\n");
     }
@@ -170,7 +170,7 @@ void ClientHandler::handleJoinCommand(const std::string& parameters) {
         return;
     }
     if (parameters == ":" || parameters.empty()) {
-        sendMessage(":irc.local 451 * JOIN :You have not specified a channel name.");
+        sendMessage(":Server 451 * JOIN :You have not specified a channel name.");
         return;
     }
     Channel* channel = server->findChannel(parameters);
