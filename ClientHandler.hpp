@@ -13,16 +13,18 @@ class Channel;
 class IRCServer;
 
 class ClientHandler {
- public:
-  ClientHandler(int socket, IRCServer* server);
-  ~ClientHandler();
-  void processInput();
-  void sendMessage(const std::string& message);
-  bool isActive() const { return active; }
-  void deactivate() { active = false; }
-  void handleDisconnect();
-  std::string getNickname() const { return nickname; };
-  IRCServer* getServer() { return server; }
+public:
+    ClientHandler(int socket, IRCServer* server);
+    ~ClientHandler();
+    void processInput();
+    void sendMessage(const std::string& message);
+    bool isActive() const { return active; }
+    void deactivate() { active = false; }
+    void handleDisconnect();
+    std::string getNickname() const { return nickname; };
+    std::string getUsername() const { return username; };
+    std::string getHostname() const { return hostname; };
+    IRCServer *getServer() { return server; }
 
  private:
   IRCServer* server;

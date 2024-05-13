@@ -84,17 +84,36 @@ void ClientHandler::parseCommand(const std::string& command,
 }
 
 void ClientHandler::handleModeCommand(const std::string& parameters) {
-  std::string mode = parameters.substr(0, parameters.find(' '));
-  if (mode == nickname) {
-    sendMessage(":" + nickname + "!" + username + "@" + hostname + " MODE " +
-                nickname + " :+i");
-  } else if (mode == currentChannel) {
-    sendMessage(":irc.local 324 " + nickname + " " + currentChannel + " :+nt");
-    sendMessage(":irc.local 329 " + nickname + " " + currentChannel + " :");
-  } else {
-    sendMessage(":Server ERROR :You can only set modes for yourself.\r\n");
-  }
+    std::string target;
+    std::string mode;
+    size_t spacePos = parameters.find(' ');
+    if (spacePos == std::string::npos) {
+        // If no space was found, assume the entire parameter is a mode to the client's nickname.
+        if (parameters.empty()) {
+            // Error handling for empty parameters could go here.
+            sendMessage(":Server ERROR :Invalid MODE command format.\r\n");
+            return;
+        }
+        target = nickname;
+        mode = parameters;
+    } else {
+        target = parameters.substr(0, spacePos);
+        mode = parameters.substr(spacePos + 1);
+    }
+
+    if (target == nickname) {
+        sendMessage(":" + nickname + "!" + username + "@" + hostname + " MODE " + nickname + " " + mode);
+        return;
+    }
+
+    Channel* channel = server->findChannel(target);
+    if (channel) {
+        channel->setMode(mode, this);
+    } else {
+        sendMessage(":Server 403 " + nickname + " " + target + " :No such channel\r\n");
+    }
 }
+
 
 void ClientHandler::handlePrivMsgCommand(const std::string& parameters) {
   size_t spacePos = std::string::npos;
@@ -188,28 +207,30 @@ void ClientHandler::handleUserCommand(const std::string& parameters) {
 }
 
 void ClientHandler::handleJoinCommand(const std::string& parameters) {
-  if (channels.find(parameters) != channels.end()) {
-    sendMessage(":Server ERROR :You are already in channel " + parameters +
-                "\r\n");
-    return;
-  }
-  if (parameters == ":" || parameters.empty()) {
-    sendMessage(
-        ":irc.local 451 * JOIN :You have not specified a channel name.");
-    return;
-  }
-  Channel* channel = server->findChannel(parameters);
-  if (channel == nullptr) {
-    server->createChannel(parameters);
-    channel = server->findChannel(parameters);
-  }
-  if (channel) {
-    channel->addClient(this);
-    channels.insert(parameters);
-    sendMessage(":" + nickname + "!" + username + "@" + hostname +
-                " JOIN :" + parameters);
-    // Send other necessary channel messages
-  }
+    if (channels.find(parameters) != channels.end()) {
+        sendMessage(":Server ERROR :You are already in channel " + parameters + "\r\n");
+        return;
+    }
+    if (parameters == ":" || parameters.empty()) {
+        sendMessage(":Server 451 * JOIN :You have not specified a channel name.");
+        return;
+    }
+    Channel* channel = server->findChannel(parameters);
+    if (channel == nullptr) {
+        server->createChannel(parameters);
+        channel = server->findChannel(parameters);
+    }
+    if (channel) {
+        channel->addClient(this);
+        channels.insert(parameters);
+        std::string message;
+        message = ":" + nickname + "!" + username + "@" + hostname + " JOIN :" + parameters + "\r\n";
+        message += ":Server 353 " + nickname + " = " + parameters + " :";
+        message += channel->getClientList() + "\r\n";
+        message += ":Server 366 " + nickname + " " + parameters + " :End of /NAMES list.";
+        sendMessage(message);
+        channel->broadcastMessage(message, this);
+    }
 }
 
 void ClientHandler::handleLeaveCommand(const std::string& parameters) {
