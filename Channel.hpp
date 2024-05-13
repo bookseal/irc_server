@@ -23,16 +23,19 @@ public:
     void broadcastMessage(const std::string& message, ClientHandler* sender);
     bool isEmpty() const;
     std::string getChannelName() const { return name; }
-    std::string getClientList() const;
     void setInviteOnly(bool inviteOnly) { this->inviteOnly = inviteOnly; }
     bool isInviteOnly() const { return inviteOnly; }
+    std::string getClientList() const;
     void setMode(const std::string& mode, ClientHandler* operatorHandler);
+    void setTopicControl(bool mode) { this->topicControl = mode; }
+    bool getTopicControl() const { return topicControl; }
 
 private:
     std::string name;
     std::map<ClientHandler*, bool> clients; // Map to keep track of clients in this channel
     std::set<ClientHandler*> operators; // Set to keep track of operators in this channel
     bool inviteOnly;
+    bool topicControl; // True if only operators can change the topic
 };
 
 #endif // CHANNEL_HPP
