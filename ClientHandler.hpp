@@ -21,6 +21,8 @@ public:
     void deactivate() { active = false; }
     void handleDisconnect();
     std::string getNickname() const { return nickname; };
+    std::string getUsername() const { return username; };
+    std::string getHostname() const { return hostname; };
     IRCServer *getServer() { return server; }
 
 private:
