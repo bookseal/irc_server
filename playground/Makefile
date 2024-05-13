@@ -43,18 +43,16 @@ n4		:
 n5		:
 	docker exec -it irc nc 127.0.0.1 -p 6667
 
-
 exec		:
 	docker exec -it irc bash
 
 down		:
 	docker stop irc
 
-clean		:
+clean		: 
 	docker system prune -a
 
-re			:
-	make clean
+re			: clean
 	make all
 
 .PHONY		: all run c1 c2 c3 c4 c5 exec down clean re

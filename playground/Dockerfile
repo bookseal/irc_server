@@ -1,7 +1,7 @@
 FROM	ubuntu:latest
 
-RUN		apt-get update -y \
-		&& apt-get install inspircd irssi tcpflow dumb-init -y
+RUN		apt-get update && \
+			apt-get install -y inspircd irssi tcpflow dumb-init netcat-traditional
 
 RUN		mkdir -p /var/run/inspircd
 
