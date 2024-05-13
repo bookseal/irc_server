@@ -17,6 +17,12 @@ void Channel::setMode(const std::string& mode, ClientHandler* operatorHandler) {
     } else if (mode == "-i" && inviteOnly) {
         inviteOnly = false;
         message += " :-i";
+    } else if (mode == "+t" && !topicControl) {
+        topicControl = true;
+        message += " :+t";
+    } else if (mode == "-t" && topicControl) {
+        topicControl = false;
+        message += " :-t";
     }
     else
         return ;
@@ -24,7 +30,7 @@ void Channel::setMode(const std::string& mode, ClientHandler* operatorHandler) {
     broadcastMessage(message, operatorHandler);
 }
 
-Channel::Channel(const std::string& name) : name(name) {
+Channel::Channel(const std::string& name) : name(name), inviteOnly(false), topicControl(false) {
 }
 
 Channel::~Channel() {}
