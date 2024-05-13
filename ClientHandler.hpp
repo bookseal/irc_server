@@ -1,6 +1,7 @@
 #ifndef CLIENT_HANDLER_HPP
 #define CLIENT_HANDLER_HPP
 
+#include <algorithm>
 #include <iostream>
 #include <string>
 #include <unistd.h>

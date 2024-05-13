@@ -127,22 +127,32 @@ void ClientHandler::handleChannelMessage(const std::string& channelName, const s
 }
 
 void ClientHandler::handleNickCommand(const std::string& parameters) {
-    std::string newNickname = parameters;
+    std::string newNickname = parameters; // 파라미터로 받은 새 닉네임
+    // 문자열 앞뒤의 공백과 탭, 개행 문자 제거
     newNickname.erase(0, newNickname.find_first_not_of(" \t\n"));
     newNickname.erase(newNickname.find_last_not_of(" \t\n") + 1);
+
+    // 새 닉네임이 비어있는지 확인
     if (newNickname.empty()) {
-        sendMessage(":Server 431 * :No nickname given");
-        return;
+        sendMessage(":Server 431 * :No nickname given"); // 닉네임 미입력 에러 메시지 전송
+        return; // 함수 종료
     }
+
+    // 새 닉네임이 사용 가능한지 서버에 확인
     if (server->isNicknameAvailable(newNickname)) {
+        // 현재 닉네임이 있고 새로운 닉네임과 다르다면 기존 닉네임 등록 해제
         if (!nickname.empty() && nickname != newNickname) {
             server->unregisterNickname(nickname);
         }
+        // 새 닉네임을 등록
         server->registerNickname(newNickname, this);
+        // 클라이언트 객체의 닉네임 업데이트
         nickname = newNickname;
+        // 클라이언트에게 닉네임 변경을 알림
         sendMessage(":" + nickname + "!" + username + "@" + hostname + " NICK :" + nickname);
         sendMessage(":Server NOTICE " + nickname + " :Nickname set to " + newNickname);
     } else {
+        // 닉네임이 이미 사용 중이라면 에러 메시지 전송
         sendMessage(":Server 433 " + nickname + " " + newNickname + " :Nickname is already in use");
     }
 }

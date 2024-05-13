@@ -24,13 +24,8 @@ public:
     void acceptNewClient();
 
     bool isNicknameAvailable(const std::string& nickname);
-//    bool isUsernameAvailable(const std::string& username);
     void registerNickname(const std::string& nickname, ClientHandler* handler);
-//    void registerUsername(const std::string& username, ClientHandler* handler);
-//    void registerHostname(const std::string& hostname, ClientHandler* handler);
     void unregisterNickname(const std::string& nickname);
-//    void unregisterUsername(const std::string& username);
-//    void unregisterHostname(const std::string& hostname);
     ClientHandler* findClientHandlerByNickname(const std::string& nickname);
 
     void createChannel(const std::string& channelName);
@@ -39,12 +34,11 @@ public:
 
     void sendMessageToUser(const std::string& senderNickname, const std::string& recipientNickname, const std::string& message);
 private:
-    int port;
-    int serverSocket;
+    int port; // 큰 빌딩의 사무실 번호 (RC 서버가 포트 6667에 바인드 됩. 6667: 빌딩번호)
+    int serverSocket; // 서버의 "문" 역할
     std::vector<struct pollfd> fds;
     std::map<int, ClientHandler*> clientHandlers; // Map from socket descriptors to client handlers
     std::map<std::string, ClientHandler*> activeNicknames;
-//    std::map<std::string, ClientHandler*> activeUsernames;
     std::map<std::string, Channel*> channels;
 
 };
