@@ -9,25 +9,68 @@ void Channel::setMode(const std::string& mode, ClientHandler* operatorHandler) {
         return;
     }
 
-    std::string message = ":" + operatorHandler->getNickname() + "!" + operatorHandler->getUsername() + "@" + operatorHandler->getHostname() + " MODE " + name;
-
-    if (mode == "+i" && !inviteOnly) {
-        inviteOnly = true;
-        message += " :+i";
-    } else if (mode == "-i" && inviteOnly) {
-        inviteOnly = false;
-        message += " :-i";
-    } else if (mode == "+t" && !topicControl) {
-        topicControl = true;
-        message += " :+t";
-    } else if (mode == "-t" && topicControl) {
-        topicControl = false;
-        message += " :-t";
+    if (mode.substr(0, 2) == "+i") {
+        setInviteMode(true, operatorHandler);
+    } else if (mode.substr(0, 2) == "-i") {
+        setInviteMode(false, operatorHandler);
+    } else if (mode.substr(0, 2) == "+t") {
+        setTopicControlMode(true, operatorHandler);
+    } else if (mode.substr(0, 2) == "-t") {
+        setTopicControlMode(false, operatorHandler);
+    } else if (mode.substr(0, 2) == "+k") {
+        std::string password = mode.substr(3);
+        if (!password.empty()) {
+            setPasswordMode(password, operatorHandler);
+        }
+    } else if (mode.substr(0, 2) == "-k" && hasPassword()) {
+        removePasswordMode(operatorHandler);
     }
-    else
-        return ;
+}
+
+
+void Channel::setInviteMode(bool enable, ClientHandler* operatorHandler) {
+    std::string change = enable ? "+i" : "-i";
+    inviteOnly = enable;
+    sendModeChangeMessage(operatorHandler, change);
+}
+
+void Channel::setTopicControlMode(bool enable, ClientHandler* operatorHandler) {
+    std::string change = enable ? "+t" : "-t";
+    topicControl = enable;
+    sendModeChangeMessage(operatorHandler, change);
+}
+
+void Channel::setPasswordMode(const std::string& password, ClientHandler* operatorHandler) {
+    setChannelPassword(password);
+    //127.000.000.001.06667-127.000.000.001.35268: :nick1!root@127.0.0.1 MODE #test +k :hello
+    sendModeChangeMessage(operatorHandler, "+k :" + password);
+}
+
+void Channel::removePasswordMode(ClientHandler* operatorHandler) {
+    removeChannelPassword();
+    sendModeChangeMessage(operatorHandler, "-k");
+}
+
+void Channel::sendModeChangeMessage(ClientHandler* operatorHandler, const std::string& modeChange) {
+    std::string message = ":" + operatorHandler->getNickname() + "!" + operatorHandler->getUsername() + "@" + operatorHandler->getHostname() + " MODE " + name + " :" + modeChange;
     operatorHandler->sendMessage(message);
     broadcastMessage(message, operatorHandler);
+}
+
+void Channel::setChannelPassword(const std::string& password) {
+    channelPassword = password;
+}
+
+void Channel::removeChannelPassword() {
+    channelPassword.clear();
+}
+
+bool Channel::checkPassword(const std::string& password) const {
+    return password == channelPassword;
+}
+
+bool Channel::hasPassword() const {
+    return !channelPassword.empty();
 }
 
 Channel::Channel(const std::string& name) : name(name), inviteOnly(false), topicControl(false) {
@@ -39,7 +82,7 @@ const std::string& Channel::getName() const {
     return name;
 }
 
-void Channel::addClient(ClientHandler* client) {
+void Channel::addClient(ClientHandler* client, const std::string& password) {
     clients.insert(std::make_pair(client, true));
     if (operators.empty()) {
         addOperator(client);
