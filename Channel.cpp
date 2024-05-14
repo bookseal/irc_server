@@ -2,31 +2,59 @@
 #include "IRCServer.hpp"
 #include "ClientHandler.hpp"
 
-
 void Channel::setMode(const std::string& mode, ClientHandler* operatorHandler) {
     if (!isOperator(operatorHandler)) {
         operatorHandler->sendMessage(":Server 482 " + operatorHandler->getNickname() + " " + name + " :You must be a channel op or higher to set channel mode.");
         return;
     }
 
-    if (mode.substr(0, 2) == "+i") {
+    std::string modeFlag = mode.substr(0, 2); // Store the mode flag for easier comparison
+
+    if (modeFlag == "+i") {
         setInviteMode(true, operatorHandler);
-    } else if (mode.substr(0, 2) == "-i") {
+    } else if (modeFlag == "-i") {
         setInviteMode(false, operatorHandler);
-    } else if (mode.substr(0, 2) == "+t") {
+    } else if (modeFlag == "+t") {
         setTopicControlMode(true, operatorHandler);
-    } else if (mode.substr(0, 2) == "-t") {
+    } else if (modeFlag == "-t") {
         setTopicControlMode(false, operatorHandler);
-    } else if (mode.substr(0, 2) == "+k") {
-        std::string password = mode.substr(3);
+    } else if (modeFlag == "+k") {
+        std::string password = mode.substr(3); // Get the password following "+k "
         if (!password.empty()) {
             setPasswordMode(password, operatorHandler);
         }
-    } else if (mode.substr(0, 2) == "-k" && hasPassword()) {
+    } else if (modeFlag == "-k" && hasPassword()) {
         removePasswordMode(operatorHandler);
+    } else if (modeFlag == "+l") {
+        std::string limit = mode.substr(3); // Get the limit following "+l "
+        if (!limit.empty()) {
+            // Convert the limit to an integer
+            int limitValue = std::stoi(limit);
+            // Set the limit
+            setLimit(limitValue, operatorHandler);
+        }
+    } else if (modeFlag == "-l") {
+        setLimit(0, operatorHandler);
     }
 }
 
+void Channel::setLimit(int limit, ClientHandler* operatorHandler) {
+    if (limit < 0) {
+        operatorHandler->sendMessage(":Server 473 " + operatorHandler->getNickname() + " " + name + " :Channel limit must be greater than 0.");
+        return;
+    }
+    std::string change = limit > 0 ? "+l " + std::to_string(limit) : "-l";
+    maxClients = limit;
+    sendModeChangeMessage(operatorHandler, change);
+}
+
+bool Channel::isFull() const {
+    return maxClients > 0 && clients.size() >= maxClients;
+}
+
+bool Channel::isInviteOnly() const {
+    return inviteOnly;
+}
 
 void Channel::setInviteMode(bool enable, ClientHandler* operatorHandler) {
     std::string change = enable ? "+i" : "-i";
@@ -53,8 +81,8 @@ void Channel::removePasswordMode(ClientHandler* operatorHandler) {
 
 void Channel::sendModeChangeMessage(ClientHandler* operatorHandler, const std::string& modeChange) {
     std::string message = ":" + operatorHandler->getNickname() + "!" + operatorHandler->getUsername() + "@" + operatorHandler->getHostname() + " MODE " + name + " :" + modeChange;
-    operatorHandler->sendMessage(message);
-    broadcastMessage(message, operatorHandler);
+//    operatorHandler->sendMessage(message);
+    broadcastMessage(message, nullptr);
 }
 
 void Channel::setChannelPassword(const std::string& password) {
@@ -73,7 +101,7 @@ bool Channel::hasPassword() const {
     return !channelPassword.empty();
 }
 
-Channel::Channel(const std::string& name) : name(name), inviteOnly(false), topicControl(false) {
+Channel::Channel(const std::string& name) : name(name), inviteOnly(false), topicControl(false), maxClients(0) {
 }
 
 Channel::~Channel() {}
