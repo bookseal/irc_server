@@ -35,6 +35,12 @@ void Channel::setMode(const std::string& mode, ClientHandler* operatorHandler) {
         }
     } else if (modeFlag == "-l") {
         setLimit(0, operatorHandler);
+    } else if (mode.substr(0, 2) == "-k" && hasPassword()) {
+            removePasswordMode(operatorHandler);
+    } else if (mode.substr(0, 2) == "+o") {
+        setOperatorMode(true, mode.substr(3), operatorHandler);
+    } else if (mode.substr(0, 2) == "-o") {
+        setOperatorMode(false, mode.substr(3), operatorHandler);
     }
 }
 
@@ -56,6 +62,21 @@ bool Channel::isInviteOnly() const {
     return inviteOnly;
 }
 
+void Channel::setOperatorMode(bool enable, const std::string& nickname, ClientHandler* operatorHandler) {
+    std::map<ClientHandler*, bool>::iterator it;
+    for (it = clients.begin(); it != clients.end(); ++it) {
+        if (it->first->getNickname() == nickname) {
+            if (enable) {
+                addOperator(it->first);
+            } else {
+                removeOperator(it->first);
+            }
+            return;
+        }
+    }
+    operatorHandler->sendMessage(":Server 441 " + operatorHandler->getNickname() + " " + name + " " + nickname + " :They aren't on that channel.");
+}
+
 void Channel::setInviteMode(bool enable, ClientHandler* operatorHandler) {
     std::string change = enable ? "+i" : "-i";
     inviteOnly = enable;
@@ -70,7 +91,6 @@ void Channel::setTopicControlMode(bool enable, ClientHandler* operatorHandler) {
 
 void Channel::setPasswordMode(const std::string& password, ClientHandler* operatorHandler) {
     setChannelPassword(password);
-    //127.000.000.001.06667-127.000.000.001.35268: :nick1!root@127.0.0.1 MODE #test +k :hello
     sendModeChangeMessage(operatorHandler, "+k :" + password);
 }
 
@@ -133,13 +153,13 @@ bool Channel::isOperator(ClientHandler* client) const {
 
 void Channel::addOperator(ClientHandler* client) {
     operators.insert(client);
-    broadcastMessage(":" + client->getNickname() + " has been granted operator status in " + name, nullptr);
+    broadcastMessage(":" + client->getNickname() + "!" + client->getUsername() + "@" + client->getHostname() + " MODE " + name + " +o :" + client->getNickname(), nullptr);
 }
 
 void Channel::removeOperator(ClientHandler* client) {
     operators.erase(client);
     if (client->isActive()) {
-        client->sendMessage(":" + client->getNickname() + " operator status revoked in " + name);
+        broadcastMessage(":" + client->getNickname() + "!" + client->getUsername() + "@" + client->getHostname() + " MODE " + name + " -o :" + client->getNickname(), nullptr);
     }
 }
 
