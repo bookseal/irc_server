@@ -44,6 +44,10 @@ public:
     bool checkPassword(const std::string& password) const;
     bool hasPassword() const; // Check if the channel has a password
 
+    // User limit management
+    void setLimit(int limit, ClientHandler* operatorHandler);
+    bool isFull() const;
+
 private:
     std::string name;
     std::map<ClientHandler*, bool> clients; // Maps clients to a bool (typically if they are active/not banned)
@@ -51,6 +55,7 @@ private:
     bool inviteOnly; // Whether the channel is invite-only
     bool topicControl; // Whether topic control is restricted to operators
     std::string channelPassword; // Optional password for the channel
+    int maxClients; // Maximum number of clients allowed in the channel
 };
 
 #endif // CHANNEL_HPP

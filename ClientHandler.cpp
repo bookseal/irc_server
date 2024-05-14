@@ -249,12 +249,16 @@ Channel* ClientHandler::getOrCreateChannel(const std::string& channelName) {
 }
 
 void ClientHandler::joinChannel(Channel* channel, const std::string& channelName, const std::string& password) {
-    if (channel->checkPassword(password)) {
+    if (channel->isInviteOnly()) {
+        sendMessage(":Server 473 " + nickname + " " + channelName + " :Cannot join channel (+i) - invite only");
+    } else if (channel->isFull()) {
+        sendMessage(":Server 471 " + nickname + " " + channelName + " :Cannot join channel (+l) - channel is full");
+    } else if (channel->checkPassword(password)) {
         channel->addClient(this, password);
         channels.insert(channelName);
         broadcastJoinMessage(channel, channelName);
     } else {
-        sendMessage(":Server 475 " + nickname + " " + channelName + " :Cannot join channel (+k) - bad key");
+            sendMessage(":Server 475 " + nickname + " " + channelName + " :Cannot join channel (+k) - bad key");
     }
 }
 
