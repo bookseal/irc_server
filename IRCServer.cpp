@@ -2,23 +2,27 @@
 #include "ClientHandler.hpp"
 #include "Channel.hpp"
 
+// IRC서버에서 특정 사용자에게 메세지 전송
 void IRCServer::sendMessageToUser(const std::string& senderNickname, const std::string& recipientNickname, const std::string& message) {
-    std::cout << "senderNickname   : " << senderNickname << std::endl;
-    std::cout << "recipientNickname: " << recipientNickname << std::endl;
+    std::cout << "senderNickname   : " << senderNickname << std::endl; // 보내는 사람
+    std::cout << "recipientNickname: " << recipientNickname << std::endl; // 받는 사람
     std::cout << "message          : " << message << "\n";
+
+    // IRC 프로토콜 형식에 맞춰 메시지를 구성
     std::string newMessage = ":" + senderNickname + "!user@host PRIVMSG " + recipientNickname + " :" + message;
-    if (activeNicknames.count(recipientNickname) > 0) {
+    
+    if (activeNicknames.count(recipientNickname) > 0) { // 수신인의 이름이 목록에 있는지 확인하기
         ClientHandler* recipientHandler = activeNicknames[recipientNickname];
-        if (recipientHandler) {
+        if (recipientHandler) { // 수신인 찾으면 메시지를 전달함
             recipientHandler->sendMessage(newMessage);
-        } else {
+        } else { // 배달원이 수신인 집에 도착했지만 수신인을 찾을 수 없는 경우
             std::cerr << "Handler for nickname '" << recipientNickname << "' not found." << std::endl;
             ClientHandler* senderHandler = activeNicknames[senderNickname];
             if (senderHandler) {
                 senderHandler->sendMessage(":Server ERROR :Internal error, recipient handler not found.\r\n");
             }
         }
-    } else {
+    } else { // 수신자의 닉네임이 목록에 없는 경우
         std::cerr << "No user with nickname '" << recipientNickname << "' found." << std::endl;
         ClientHandler* senderHandler = activeNicknames[senderNickname];
         if (senderHandler) {
@@ -136,23 +140,28 @@ void IRCServer::run() {
     }
 }
 
-
+// 새 손님(클라이언트) 도착해서 받아들이는 과정
 void IRCServer::acceptNewClient() {
-    struct sockaddr_in clientAddr;
+    // 클라이언트의 주소 정보를 저장할 구조채 선언하기.
+    struct sockaddr_in clientAddr; // 클라이언트의 기본 정보(주소)받기
     socklen_t clientAddrLen = sizeof(clientAddr);
+
+    // 손님 맞이: 서버 소켓을 통해 클라이언트의 연결 요청을 수락함.
     int clientSocket = accept(serverSocket, (struct sockaddr *)&clientAddr, &clientAddrLen);
-    if (clientSocket < 0) {
+    if (clientSocket < 0) { // 연결 수락 실패
         std::cerr << "Error accepting new connection." << std::endl;
         return;
     }
 
+    // 새 손님을 테이블로 안내: 새 클라이언트를 처리할 '클라이언트 핸들러 객체' 생성하기.
     ClientHandler* newHandler = new ClientHandler(clientSocket, this);
     clientHandlers[clientSocket] = newHandler;
 
-    struct pollfd clientFD;
-    clientFD.fd = clientSocket;
-    clientFD.events = POLLIN;
-    fds.push_back(clientFD);
+    // 클라이언트 소켓을 감시할 폴fd를 설정하고 이벤트 목록에 추가함.
+    struct pollfd clientFD; // 손님 예약 카드 만들기: 손님이 어떤 서비스를 원하는지 기록함
+    clientFD.fd = clientSocket; // 손님의 위치 저장하기 (폴 함수가 감시할 클라이언트 소켓 지정)
+    clientFD.events = POLLIN; // 폴인: 데이터 수신 가능 이벤트 (직원은 손님이 주문 준비가 되었음을 알게됨)
+    fds.push_back(clientFD); // 완성된 예약 카드를 예약 대장에 추가함. 직원은 언제든 확인 가능함
 
     std::cout << "New client connected: " << clientSocket << std::endl;
 }
@@ -184,28 +193,39 @@ void IRCServer::unregisterNickname(const std::string& nickname) {
 }
 
 ClientHandler* IRCServer::findClientHandlerByNickname(const std::string& nickname) {
+    // activeNicknames 맵에서 닉네임을 키로 사용해 핸들러 객체 찾기
     std::map<std::string, ClientHandler*>::iterator it = activeNicknames.find(nickname);
+
+    // 해당 닉네임의 핸들러 객체가 존재한면(찾은 이터레이터가 맵의 끝이 아니라면)
     if (it != activeNicknames.end()) {
-        return it->second;
+        return it->second; // 해당 핸들러 객체의 포인터 리턴하기
     }
+
+    // 닉네임에 해당하는 핸들러 객체를 찾지 못했다면 NULL을 반환
     return NULL;
 }
 
 void IRCServer::createChannel(const std::string& name) {
+    // 해당 이름의 채널이 이미 존재하지 않는 경우 새 채널 생성하기
     if (channels.find(name) == channels.end()) {
         channels[name] = new Channel(name);
     }
 }
 
 void IRCServer::deleteChannel(const std::string& name) {
+    // 채널 목록에서 해당 이름의 채널 찾기
     std::map<std::string, Channel*>::iterator it = channels.find(name);
+
+    // 채널이 존재하고 비어있는 경우, 채널 삭제하기
     if (it != channels.end() && it->second->isEmpty()) {
-        delete it->second;  // Delete the channel object
-        channels.erase(it); // Remove the entry from the map
+        delete it->second; // 객체를 메모리에서 해제
+        channels.erase(it); // 목록에서 해당 채널 삭제
     }
 }
 
 Channel* IRCServer::findChannel(const std::string& name) {
     std::map<std::string, Channel*>::iterator it = channels.find(name);
+
+    // 채널이 존재하는 경우 해당 채널의 객체 포인터 반환하기
     return it != channels.end() ? it->second : NULL;
 }
