@@ -14,7 +14,7 @@ public:
     ~Channel();
 
     const std::string& getName() const;
-    void addClient(ClientHandler* client);
+    void addClient(ClientHandler* client, const std::string& password = "");
     void removeClient(ClientHandler* client);
     bool isClientMember(ClientHandler* client) const;
     bool isOperator(ClientHandler* client) const; // Check if a client is an operator
@@ -22,20 +22,34 @@ public:
     void removeOperator(ClientHandler* client); // Remove an operator
     void broadcastMessage(const std::string& message, ClientHandler* sender);
     bool isEmpty() const;
-    std::string getChannelName() const { return name; }
-    void setInviteOnly(bool inviteOnly) { this->inviteOnly = inviteOnly; }
-    bool isInviteOnly() const { return inviteOnly; }
-    std::string getClientList() const;
-    void setMode(const std::string& mode, ClientHandler* operatorHandler);
-    void setTopicControl(bool mode) { this->topicControl = mode; }
-    bool getTopicControl() const { return topicControl; }
+    std::string getClientList() const; // Return list of clients in the channel
+    std::string getChannelName() const { return name; }; // Return list of channel names
+
+    // Mode settings
+    void setInviteOnly(bool inviteOnly);
+    bool isInviteOnly() const;
+    void setMode(const std::string& mode, ClientHandler* operatorHandler); // Set specific mode
+    void setTopicControl(bool mode); // Set topic control mode
+    bool getTopicControl() const; // Get topic control status
+    void setInviteMode(bool enable, ClientHandler* operatorHandler);
+    void setTopicControlMode(bool enable, ClientHandler* operatorHandler);
+    void setPasswordMode(const std::string& password, ClientHandler* operatorHandler);
+    void removePasswordMode(ClientHandler* operatorHandler);
+    void sendModeChangeMessage(ClientHandler* operatorHandler, const std::string& modeChange);
+
+    // Password management
+    void setChannelPassword(const std::string& password);
+    void removeChannelPassword();
+    bool checkPassword(const std::string& password) const;
+    bool hasPassword() const; // Check if the channel has a password
 
 private:
     std::string name;
-    std::map<ClientHandler*, bool> clients; // Map to keep track of clients in this channel
-    std::set<ClientHandler*> operators; // Set to keep track of operators in this channel
-    bool inviteOnly;
-    bool topicControl; // True if only operators can change the topic
+    std::map<ClientHandler*, bool> clients; // Maps clients to a bool (typically if they are active/not banned)
+    std::set<ClientHandler*> operators; // Set of operators in this channel
+    bool inviteOnly; // Whether the channel is invite-only
+    bool topicControl; // Whether topic control is restricted to operators
+    std::string channelPassword; // Optional password for the channel
 };
 
 #endif // CHANNEL_HPP
