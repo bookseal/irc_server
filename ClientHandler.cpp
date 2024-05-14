@@ -90,7 +90,7 @@ void ClientHandler::handleModeCommand(const std::string& parameters) {
     if (spacePos == std::string::npos) {
         // If no space was found, assume the entire parameter is a mode to the client's nickname.
         if (parameters.empty()) {
-            sendMessage(":Server ERROR :Invalid MODE command format.\r\n");
+            sendMessage(":Server ERROR :Invalid MODE command format.");
             return;
         }
         target = nickname;
@@ -109,10 +109,9 @@ void ClientHandler::handleModeCommand(const std::string& parameters) {
     if (channel) {
         channel->setMode(mode, this);
     } else {
-        sendMessage(":Server 403 " + nickname + " " + target + " :No such channel\r\n");
+        sendMessage(":Server 403 " + nickname + " " + target + " :No such channel");
     }
 }
-
 
 void ClientHandler::handlePrivMsgCommand(const std::string& parameters) {
   size_t spacePos = std::string::npos;
@@ -123,7 +122,7 @@ void ClientHandler::handlePrivMsgCommand(const std::string& parameters) {
     }
   }
   if (spacePos == std::string::npos) {
-    sendMessage(":Server ERROR :Invalid PRIVMSG format.\r\n");
+    sendMessage(":Server ERROR :Invalid PRIVMSG format.");
     return;
   }
   std::string target = parameters.substr(0, spacePos);
@@ -138,14 +137,14 @@ void ClientHandler::handlePrivMsgCommand(const std::string& parameters) {
 void ClientHandler::defaultMessageHandling(const std::string& message) {
   if (nickname.empty()) {
     sendMessage(
-        ":Server ERROR :Please choose a nickname with the NICK command.\r\n");
+        ":Server ERROR :Please choose a nickname with the NICK command.");
     return;
   }
   if (!currentChannel.empty()) {
     handleChannelMessage(currentChannel, message);
   } else {
     sendMessage(
-        ":Server ERROR :No channel selected or unrecognized command.\r\n");
+        ":Server ERROR :No channel selected or unrecognized command.");
   }
 }
 
@@ -158,8 +157,7 @@ void ClientHandler::handleChannelMessage(const std::string& channelName,
                                   " PRIVMSG " + channelName + " :" + message,
                               this);
   } else {
-    sendMessage(":Server ERROR :You are not in channel " + channelName +
-                "\r\n");
+    sendMessage(":Server ERROR :You are not in channel " + channelName);
   }
 }
 
@@ -274,7 +272,7 @@ void ClientHandler::broadcastJoinMessage(Channel* channel, const std::string& ch
 
 void ClientHandler::handleLeaveCommand(const std::string& parameters) {
   if (channels.find(parameters) == channels.end()) {
-    sendMessage(":Server ERROR :You are not in channel " + parameters + "\r\n");
+    sendMessage(":Server ERROR :You are not in channel " + parameters);
     return;
   }
   Channel* channel = server->findChannel(parameters);
@@ -292,7 +290,7 @@ void ClientHandler::handleKickCommand(const std::string& parameters) {
   std::istringstream paramStream(parameters);
   paramStream >> channelName >> targetName;
   if (channelName.empty() || targetName.empty()) {
-    sendMessage(":Server ERROR :Invalid KICK command format.\r\n");
+    sendMessage(":Server ERROR :Invalid KICK command format.");
     return;
   }
   Channel* channel = server->findChannel(channelName);
@@ -324,7 +322,7 @@ void ClientHandler::handleKickCommand(const std::string& parameters) {
       //   this);
   } else {
     sendMessage("Server ERROR :" + targetName + " is not in channel " +
-                channelName + "\r\n");
+                channelName);
   }
 }
 

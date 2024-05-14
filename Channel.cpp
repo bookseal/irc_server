@@ -28,9 +28,7 @@ void Channel::setMode(const std::string& mode, ClientHandler* operatorHandler) {
     } else if (modeFlag == "+l") {
         std::string limit = mode.substr(3); // Get the limit following "+l "
         if (!limit.empty()) {
-            // Convert the limit to an integer
             int limitValue = std::stoi(limit);
-            // Set the limit
             setLimit(limitValue, operatorHandler);
         }
     } else if (modeFlag == "-l") {
@@ -101,7 +99,6 @@ void Channel::removePasswordMode(ClientHandler* operatorHandler) {
 
 void Channel::sendModeChangeMessage(ClientHandler* operatorHandler, const std::string& modeChange) {
     std::string message = ":" + operatorHandler->getNickname() + "!" + operatorHandler->getUsername() + "@" + operatorHandler->getHostname() + " MODE " + name + " :" + modeChange;
-//    operatorHandler->sendMessage(message);
     broadcastMessage(message, nullptr);
 }
 
