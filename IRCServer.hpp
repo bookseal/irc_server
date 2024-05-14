@@ -37,7 +37,7 @@ private:
     int port; // 큰 빌딩의 사무실 번호 (RC 서버가 포트 6667에 바인드 됩. 6667: 빌딩번호)
     int serverSocket; // 서버의 "문" 역할
     std::vector<struct pollfd> fds;
-    std::map<int, ClientHandler*> clientHandlers; // Map from socket descriptors to client handlers
+    std::map<int, ClientHandler*> clientHandlers;
     std::map<std::string, ClientHandler*> activeNicknames;
     std::map<std::string, Channel*> channels;
 
