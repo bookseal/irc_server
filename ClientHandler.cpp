@@ -310,6 +310,7 @@ void ClientHandler::handleKickCommand(const std::string& parameters) {
       sendMessage(message);
       channel->broadcastMessage(message, this);
       channel->removeClient(target);
+      target->handleLeaveCommand(channelName);
 
 //      channels.erase(targetName);
 //     sendMessage(
