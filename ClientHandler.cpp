@@ -90,7 +90,6 @@ void ClientHandler::handleModeCommand(const std::string& parameters) {
     if (spacePos == std::string::npos) {
         // If no space was found, assume the entire parameter is a mode to the client's nickname.
         if (parameters.empty()) {
-            // Error handling for empty parameters could go here.
             sendMessage(":Server ERROR :Invalid MODE command format.\r\n");
             return;
         }

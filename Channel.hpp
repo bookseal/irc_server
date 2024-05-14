@@ -36,6 +36,7 @@ public:
     void setPasswordMode(const std::string& password, ClientHandler* operatorHandler);
     void removePasswordMode(ClientHandler* operatorHandler);
     void sendModeChangeMessage(ClientHandler* operatorHandler, const std::string& modeChange);
+    void setOperatorMode(bool enable, const std::string& nickname, ClientHandler* operatorHandler);
 
     // Password management
     void setChannelPassword(const std::string& password);
