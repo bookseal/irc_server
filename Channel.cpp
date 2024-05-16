@@ -198,3 +198,25 @@ std::string Channel::getClientList() const {
     }
     return list;
 }
+
+// New methods for handling topics
+
+const std::string& Channel::getTopic() const {
+    return topic;
+}
+
+const std::string& Channel::getTopicSetter() const {
+    return topicSetter;
+}
+
+std::time_t Channel::getTopicTimestamp() const {
+    return topicTimestamp;
+}
+
+void Channel::setTopic(const std::string& newTopic, const std::string& setter) {
+    topic = newTopic;
+    topicSetter = setter;
+    topicTimestamp = std::time(nullptr);
+    std::string topicMessage = ":" + setter + " TOPIC " + name + " :" + newTopic;
+    broadcastMessage(topicMessage, nullptr);
+}

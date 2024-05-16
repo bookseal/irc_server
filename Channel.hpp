@@ -4,6 +4,8 @@
 #include <string>
 #include <set>
 #include <map>
+#include <ctime> // For time_t
+
 
 class ClientHandler; // Forward declaration
 class IRCServer; // Forward declaration
@@ -48,6 +50,12 @@ public:
     void setLimit(int limit, ClientHandler* operatorHandler);
     bool isFull() const;
 
+    // Topic management
+    const std::string& getTopic() const; // Get the current topic
+    const std::string& getTopicSetter() const; // Get the nickname of the user who set the topic
+    std::time_t getTopicTimestamp() const; // Get the timestamp when the topic was set
+    void setTopic(const std::string& newTopic, const std::string& setter); // Set a new topic
+
 private:
     std::string name;
     std::map<ClientHandler*, bool> clients; // Maps clients to a bool (typically if they are active/not banned)
@@ -56,6 +64,12 @@ private:
     bool topicControl; // Whether topic control is restricted to operators
     std::string channelPassword; // Optional password for the channel
     int maxClients; // Maximum number of clients allowed in the channel
+
+    // Topic-related members
+    std::string topic; // The current topic of the channel
+    std::string topicSetter; // The nickname of the user who set the topic
+    std::time_t topicTimestamp; // The time when the topic was set
+
 };
 
 #endif // CHANNEL_HPP
