@@ -128,7 +128,7 @@ bool Channel::hasPassword() const {
     return !channelPassword.empty();
 }
 
-Channel::Channel(const std::string& name) : name(name), inviteOnly(false), topicControl(false), maxClients(0) {
+Channel::Channel(const std::string& name) : name(name), inviteOnly(false), topicControl(true), maxClients(0) {
 }
 
 Channel::~Channel() {}
@@ -137,12 +137,27 @@ const std::string& Channel::getName() const {
     return name;
 }
 
+// void Channel::addClient(ClientHandler* client, const std::string& password) {
+//     clients.insert(std::make_pair(client, true));
+//     if (operators.empty()) {
+//         addOperator(client);
+//     }
+// }
 void Channel::addClient(ClientHandler* client, const std::string& password) {
     clients.insert(std::make_pair(client, true));
     if (operators.empty()) {
         addOperator(client);
     }
+
+    // Send current topic to the newly joined client
+    if (!topic.empty()) {
+        std::string topicMessage = ":Server 332 " + client->getNickname() + " " + name + " :" + topic;
+        client->sendMessage(topicMessage);
+        topicMessage = ":Server 333 " + client->getNickname() + " " + name + " " + topicSetter + " " + std::to_string(topicTimestamp);
+        client->sendMessage(topicMessage);
+    }
 }
+
 
 void Channel::removeClient(ClientHandler* client) {
     clients.erase(client);
@@ -219,4 +234,8 @@ void Channel::setTopic(const std::string& newTopic, const std::string& setter) {
     topicTimestamp = std::time(nullptr);
     std::string topicMessage = ":" + setter + " TOPIC " + name + " :" + newTopic;
     broadcastMessage(topicMessage, nullptr);
+}
+
+bool Channel::getTopicControl() const {
+    return topicControl;
 }
