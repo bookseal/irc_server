@@ -324,9 +324,7 @@ void ClientHandler::handleKickCommand(const std::string& parameters) {
     sendMessage(message);
     channel->broadcastMessage(message, this);
     channel->removeClient(target);
-    target->handleLeaveCommand(channelName);
-
-    //      channels.erase(targetName);
+    target->eraseChannel(channel);
   } else {
     sendMessage("Server ERROR :" + targetName + " is not on channel " +
                 channelName);
@@ -394,3 +392,5 @@ std::string ClientHandler::getUsername() const { return username; }
 std::string ClientHandler::getHostname() const { return hostname; }
 
 bool ClientHandler::isActive() const { return active; }
+
+void ClientHandler::eraseChannel(Channel* channel) { channels.erase(channel->getName()); }
