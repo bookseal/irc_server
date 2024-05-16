@@ -73,8 +73,9 @@ void ClientHandler::parseCommand(const std::string& command,
     handlePrivMsgCommand(parameters);
   } else if (command == "MODE") {
     handleModeCommand(parameters);
-  } else if (command == "CAP" || command == "WHOIS" || command == "PING" ||
-             command == "PASS") {
+  } else if (command == "PING") {
+    sendMessage(":Server PONG Server :Server");
+  } else if (command == "CAP" || command == "WHOIS" || command == "PASS") {
     ;
   } else if (command == "KICK") {
     handleKickCommand(parameters);

@@ -28,16 +28,26 @@ void Channel::setMode(const std::string& mode, ClientHandler* operatorHandler) {
     } else if (modeFlag == "+l") {
         std::string limit = mode.substr(3); // Get the limit following "+l "
         if (!limit.empty()) {
-            int limitValue = std::stoi(limit);
-            setLimit(limitValue, operatorHandler);
+            int limitValue = 0;
+            bool valid = true;
+            for (size_t i = 0; i < limit.length(); ++i) {
+                if (!isdigit(limit[i])) {
+                    valid = false;
+                    break;
+                }
+                limitValue = limitValue * 10 + (limit[i] - '0');
+            }
+            if (valid && limitValue > 0) {
+                setLimit(limitValue, operatorHandler);
+            } else {
+                operatorHandler->sendMessage(":Server 473 " + operatorHandler->getNickname() + " " + name + " :Channel limit must be greater than 0.");
+            }
         }
     } else if (modeFlag == "-l") {
         setLimit(0, operatorHandler);
-    } else if (mode.substr(0, 2) == "-k" && hasPassword()) {
-            removePasswordMode(operatorHandler);
-    } else if (mode.substr(0, 2) == "+o") {
+    } else if (modeFlag == "+o") {
         setOperatorMode(true, mode.substr(3), operatorHandler);
-    } else if (mode.substr(0, 2) == "-o") {
+    } else if (modeFlag == "-o") {
         setOperatorMode(false, mode.substr(3), operatorHandler);
     }
 }
