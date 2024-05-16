@@ -119,24 +119,35 @@ void ClientHandler::handleModeCommand(const std::string& parameters) {
 }
 
 void ClientHandler::handlePrivMsgCommand(const std::string& parameters) {
-  size_t spacePos = std::string::npos;
-  for (size_t i = 0; i < parameters.size(); ++i) {
-    if (parameters[i] == ' ') {
-      spacePos = i;
-      break;
+    size_t spacePos = std::string::npos;
+    for (size_t i = 0; i < parameters.size(); ++i) {
+        if (parameters[i] == ' ') {
+            spacePos = i;
+            break;
+        }
     }
-  }
-  if (spacePos == std::string::npos) {
-    sendMessage(":Server ERROR :Invalid PRIVMSG format.");
-    return;
-  }
-  std::string target = parameters.substr(0, spacePos);
-  std::string message = parameters.substr(spacePos + 2);
-  if (!target.empty() && target[0] == '#') {
-    handleChannelMessage(target, message);
-  } else {
+    if (spacePos == std::string::npos) {
+        sendMessage(":Server ERROR :Invalid PRIVMSG format.");
+        return;
+    }
+    std::string target = parameters.substr(0, spacePos);
+    std::string message = parameters.substr(spacePos + 2);
+    if (!target.empty() && target[0] == '#') {
+        handleChannelMessage(target, message);
+    }
+    // 127.000.000.001.47160-127.000.000.001.06667: PRIVMSG nick2 :.DCC SEND infile 2130706433 45651 21.
+    else if (message.find(".DCC SEND") != std::string::npos){
+      handleFileTransferMessage(target, message);
+    } else {
     server->sendMessageToUser(nickname, target, message);
   }
+}
+
+void ClientHandler::handleFileTransferMessage(const std::string& target, const std::string& parameters) {
+    // Example: .DCC SEND infile 2130706433 45651 21
+    // 127.000.000.001.06667-127.000.000.001.42146: :nick1!root@127.0.0.1 PRIVMSG nick2 :.DCC SEND infile 2130706433 45651 21.
+    std::string message = parameters;
+    server->sendMessageToUser(nickname, target, message);
 }
 
 void ClientHandler::defaultMessageHandling(const std::string& message) {

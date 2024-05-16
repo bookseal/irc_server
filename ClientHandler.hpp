@@ -41,6 +41,7 @@ class ClientHandler {
   void joinChannel(Channel* channel, const std::string& channelName,
                    const std::string& password);
   void eraseChannel(Channel* channel);
+  void handleFileTransferMessage(const std::string &target, const std::string &message);
   void broadcastJoinMessage(Channel* channel, const std::string& channelName);
 
   // Connection management
