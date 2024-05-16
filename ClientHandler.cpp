@@ -78,39 +78,43 @@ void ClientHandler::parseCommand(const std::string& command,
     ;
   } else if (command == "KICK") {
     handleKickCommand(parameters);
+  } else if (command == "INVITE") {
+    handleInviteCommand(parameters);
   } else {
     defaultMessageHandling(command + " " + parameters);
   }
 }
 
 void ClientHandler::handleModeCommand(const std::string& parameters) {
-    std::string target;
-    std::string mode;
-    size_t spacePos = parameters.find(' ');
-    if (spacePos == std::string::npos) {
-        // If no space was found, assume the entire parameter is a mode to the client's nickname.
-        if (parameters.empty()) {
-            sendMessage(":Server ERROR :Invalid MODE command format.");
-            return;
-        }
-        target = nickname;
-        mode = parameters;
-    } else {
-        target = parameters.substr(0, spacePos);
-        mode = parameters.substr(spacePos + 1);
+  std::string target;
+  std::string mode;
+  size_t spacePos = parameters.find(' ');
+  if (spacePos == std::string::npos) {
+    // If no space was found, assume the entire parameter is a mode to the
+    // client's nickname.
+    if (parameters.empty()) {
+      sendMessage(":Server ERROR :Invalid MODE command format.");
+      return;
     }
+    target = nickname;
+    mode = parameters;
+  } else {
+    target = parameters.substr(0, spacePos);
+    mode = parameters.substr(spacePos + 1);
+  }
 
-    if (target == nickname) {
-        sendMessage(":" + nickname + "!" + username + "@" + hostname + " MODE " + nickname + " " + mode);
-        return;
-    }
+  if (target == nickname) {
+    sendMessage(":" + nickname + "!" + username + "@" + hostname + " MODE " +
+                nickname + " " + mode);
+    return;
+  }
 
-    Channel* channel = server->findChannel(target);
-    if (channel) {
-        channel->setMode(mode, this);
-    } else {
-        sendMessage(":Server 403 " + nickname + " " + target + " :No such channel");
-    }
+  Channel* channel = server->findChannel(target);
+  if (channel) {
+    channel->setMode(mode, this);
+  } else {
+    sendMessage(":Server 403 " + nickname + " " + target + " :No such channel");
+  }
 }
 
 void ClientHandler::handlePrivMsgCommand(const std::string& parameters) {
@@ -143,8 +147,7 @@ void ClientHandler::defaultMessageHandling(const std::string& message) {
   if (!currentChannel.empty()) {
     handleChannelMessage(currentChannel, message);
   } else {
-    sendMessage(
-        ":Server ERROR :No channel selected or unrecognized command.");
+    sendMessage(":Server ERROR :No channel selected or unrecognized command.");
   }
 }
 
@@ -204,71 +207,81 @@ void ClientHandler::handleUserCommand(const std::string& parameters) {
 }
 
 void ClientHandler::handleJoinCommand(const std::string& parameters) {
-    if (parameters == ":" || parameters.empty()) {
-        sendMessage(":Server 451 * JOIN :You have not registered.");
-        return;
-    }
+  if (parameters == ":" || parameters.empty()) {
+    sendMessage(":Server 451 * JOIN :You have not registered.");
+    return;
+  }
 
-    std::size_t firstSpace = parameters.find(' ');
-    std::string channelName = parameters.substr(0, firstSpace);
-    std::string password = (firstSpace != std::string::npos) ? parameters.substr(firstSpace + 1) : "";
+  std::size_t firstSpace = parameters.find(' ');
+  std::string channelName = parameters.substr(0, firstSpace);
+  std::string password = (firstSpace != std::string::npos)
+                             ? parameters.substr(firstSpace + 1)
+                             : "";
 
-    if (channelName.empty()) {
-        sendMessage(":Server 451 * JOIN :You have not specified a channel name.");
-        return;
-    }
-    if (isAlreadyInChannel(channelName)) {
-        return;
-    }
+  if (channelName.empty()) {
+    sendMessage(":Server 451 * JOIN :You have not specified a channel name.");
+    return;
+  }
+  if (isAlreadyInChannel(channelName)) {
+    return;
+  }
 
-    Channel* channel = getOrCreateChannel(channelName);
-    if (channel) {
-        joinChannel(channel, channelName, password);
-    } else {
-        sendMessage(":Server 403 " + channelName + " :No such channel");
-    }
+  Channel* channel = getOrCreateChannel(channelName);
+  if (channel) {
+    joinChannel(channel, channelName, password);
+  } else {
+    sendMessage(":Server 403 " + channelName + " :No such channel");
+  }
 }
 
 bool ClientHandler::isAlreadyInChannel(const std::string& channelName) {
-    if (channels.find(channelName) != channels.end()) {
-        sendMessage(":Server ERROR :You are already in channel " + channelName + "\r\n");
-        return true;
-    }
-    return false;
+  if (channels.find(channelName) != channels.end()) {
+    sendMessage(":Server ERROR :You are already in channel " + channelName +
+                "\r\n");
+    return true;
+  }
+  return false;
 }
 
 Channel* ClientHandler::getOrCreateChannel(const std::string& channelName) {
-    Channel* channel = server->findChannel(channelName);
-    if (channel == nullptr) {
-        server->createChannel(channelName);
-        channel = server->findChannel(channelName);
-    }
-    return channel;
+  Channel* channel = server->findChannel(channelName);
+  if (channel == nullptr) {
+    server->createChannel(channelName);
+    channel = server->findChannel(channelName);
+  }
+  return channel;
 }
 
-void ClientHandler::joinChannel(Channel* channel, const std::string& channelName, const std::string& password) {
-    if (channel->isInviteOnly()) {
-        sendMessage(":Server 473 " + nickname + " " + channelName + " :Cannot join channel (+i) - invite only");
-    } else if (channel->isFull()) {
-        sendMessage(":Server 471 " + nickname + " " + channelName + " :Cannot join channel (+l) - channel is full");
-    } else if (channel->checkPassword(password)) {
-        channel->addClient(this, password);
-        channels.insert(channelName);
-        broadcastJoinMessage(channel, channelName);
-    } else {
-            sendMessage(":Server 475 " + nickname + " " + channelName + " :Cannot join channel (+k) - bad key");
-    }
+void ClientHandler::joinChannel(Channel* channel,
+                                const std::string& channelName,
+                                const std::string& password) {
+  if (channel->isInviteOnly()) {
+    sendMessage(":Server 473 " + nickname + " " + channelName +
+                " :Cannot join channel (+i) - invite only");
+  } else if (channel->isFull()) {
+    sendMessage(":Server 471 " + nickname + " " + channelName +
+                " :Cannot join channel (+l) - channel is full");
+  } else if (channel->checkPassword(password)) {
+    channel->addClient(this, password);
+    channels.insert(channelName);
+    broadcastJoinMessage(channel, channelName);
+  } else {
+    sendMessage(":Server 475 " + nickname + " " + channelName +
+                " :Cannot join channel (+k) - bad key");
+  }
 }
 
-void ClientHandler::broadcastJoinMessage(Channel* channel, const std::string& channelName) {
-    std::string message = ":" + nickname + "!" + username + "@" + hostname + " JOIN :" + channelName + "\r\n";
-    message += ":Server 353 " + nickname + " = " + channelName + " :";
-    message += channel->getClientList() + "\r\n";
-    message += ":Server 366 " + nickname + " " + channelName + " :End of /NAMES list.";
-    sendMessage(message);
-    channel->broadcastMessage(message, this);
+void ClientHandler::broadcastJoinMessage(Channel* channel,
+                                         const std::string& channelName) {
+  std::string message = ":" + nickname + "!" + username + "@" + hostname +
+                        " JOIN :" + channelName + "\r\n";
+  message += ":Server 353 " + nickname + " = " + channelName + " :";
+  message += channel->getClientList() + "\r\n";
+  message +=
+      ":Server 366 " + nickname + " " + channelName + " :End of /NAMES list.";
+  sendMessage(message);
+  channel->broadcastMessage(message, this);
 }
-
 
 void ClientHandler::handleLeaveCommand(const std::string& parameters) {
   if (channels.find(parameters) == channels.end()) {
@@ -297,33 +310,58 @@ void ClientHandler::handleKickCommand(const std::string& parameters) {
   if (channel == nullptr) {
     return;
   }
-  ClientHandler *target = server->findClientHandlerByNickname(targetName);
+  ClientHandler* target = server->findClientHandlerByNickname(targetName);
 
   // kick하는 주체가 그 채널의 operator인지 확인
   if (!channel->isOperator(this)) {
     sendMessage("Server ERROR :You are not an operator in channel " +
                 channelName + "\r\n");
     // 그 채널에 target이 있는지 확인
-  } else if (channel->isClientMember(target))
-  {
-      std::string message = ":" + nickname + "!" + username + "@" + hostname + " KICK " + channel->getChannelName() + " " + targetName;
-      sendMessage(message);
-      channel->broadcastMessage(message, this);
-      channel->removeClient(target);
-      target->handleLeaveCommand(channelName);
+  } else if (channel->isClientMember(target)) {
+    std::string message = ":" + nickname + "!" + username + "@" + hostname +
+                          " KICK " + channel->getChannelName() + " " +
+                          targetName;
+    sendMessage(message);
+    channel->broadcastMessage(message, this);
+    channel->removeClient(target);
+    target->handleLeaveCommand(channelName);
 
-//      channels.erase(targetName);
-//     sendMessage(
-//      ":" + nickname + "!" + username + "@" + hostname + " KICK " +targetName);
-//      sendMessage(
-//      ":" + nickname + "!" + username + "@" + hostname + " NOTICE " + channelName + " " + targetName + " has left "+ channelName);
-
-      // channel->broadcastMessage(
-      //   ":" + nickname + "!" + username + "@" + hostname + " NOTICE " + channelName + " " + targetName + " has left "+ channelName,
-      //   this);
+    //      channels.erase(targetName);
   } else {
-    sendMessage("Server ERROR :" + targetName + " is not in channel " +
+    sendMessage("Server ERROR :" + targetName + " is not on channel " +
                 channelName);
+  }
+}
+
+void ClientHandler::handleInviteCommand(const std::string& parameters) {
+  std::string targetName;
+  std::string channelName;
+  std::istringstream paramStream(parameters);
+  paramStream >> targetName >> channelName;
+  if (targetName.empty() || channelName.empty()) {
+    sendMessage(":Server ERROR :Invalid INVITE command format.");
+    return;
+  }
+  ClientHandler* target = server->findClientHandlerByNickname(targetName);
+  Channel* channel = server->findChannel(channelName);
+  if (target == nullptr) {
+    sendMessage(":Server ERROR :No such nick " + targetName);
+  } else if (channel == nullptr) {
+    sendMessage(":Server ERROR :No such channel " + channelName);
+  } else if (!channel->isClientMember(this)) {
+    sendMessage(":Server ERROR :You are not on channel " + channelName);
+  } else if (channel->isClientMember(target)) {
+    sendMessage(":Server ERROR :" + targetName + " is already on channel " +
+                channelName + "\r\n");
+  } else if (!channel->isOperator(this)) {
+    sendMessage(
+        ":Server ERROR :You must be a channel op or higher to send an "
+        "invite.\r\n");
+  } else {
+    std::string message = ":" + nickname + "!" + username + "@" + hostname +
+                          " INVITE " + targetName + " " + channelName;
+    target->sendMessage(message);
+    channel->broadcastMessage(message, this);
   }
 }
 
@@ -347,22 +385,12 @@ void ClientHandler::sendMessage(const std::string& message) {
   }
 }
 
-void ClientHandler::deactivate() {
-    active = false;
-}
+void ClientHandler::deactivate() { active = false; }
 
-std::string ClientHandler::getNickname() const {
-    return nickname;
-}
+std::string ClientHandler::getNickname() const { return nickname; }
 
-std::string ClientHandler::getUsername() const {
-    return username;
-}
+std::string ClientHandler::getUsername() const { return username; }
 
-std::string ClientHandler::getHostname() const {
-    return hostname;
-}
+std::string ClientHandler::getHostname() const { return hostname; }
 
-bool ClientHandler::isActive() const {
-    return active;
-}
+bool ClientHandler::isActive() const { return active; }
