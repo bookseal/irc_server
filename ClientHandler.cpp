@@ -17,12 +17,11 @@ void ClientHandler::processInput() {
   static std::string accumulatedInput;
 
   ssize_t bytesRead = read(clientSocket, buffer, sizeof(buffer) - 1);
-
   if (bytesRead > 0) {
     buffer[bytesRead] = '\0';
     accumulatedInput += buffer;
     size_t pos = 0;
-    while ((pos = accumulatedInput.find("\r\n")) != std::string::npos) {
+    while ((pos = accumulatedInput.find("\n")) != std::string::npos) {
       std::string command = accumulatedInput.substr(0, pos);
       std::cout << "Received: " << command << "$" << std::endl;
       processCommand(command);
@@ -75,7 +74,7 @@ void ClientHandler::parseCommand(const std::string& command,
     handleModeCommand(parameters);
   } else if (command == "PING") {
     sendMessage(":Server PONG Server :Server");
-  } else if (command == "CAP" || command == "WHOIS" || command == "PASS") {
+  } else if (command == "CAP" || command == "WHOIS" || command == "PASS" || command == "WHO") {
     ;
   } else if (command == "KICK") {
     handleKickCommand(parameters);
