@@ -13,34 +13,35 @@ ClientHandler::~ClientHandler() {
 
 // IRC서버에서 클라이언트 핸들러가 클라이언트로부터 수신한 데이터 처리하는 함수
 void ClientHandler::processInput() {
-  const size_t bufferSize = 1024; // 입력을 저장할 버퍼 크기 세팅
-  char buffer[bufferSize]; // 데이터 수신을 위한 버퍼
-  static std::string accumulatedInput; // 누적 입력을 저장하는 문자열
+  const size_t bufferSize = 1024;  // 입력을 저장할 버퍼 크기 세팅
+  char buffer[bufferSize];         // 데이터 수신을 위한 버퍼
+  static std::string accumulatedInput;  // 누적 입력을 저장하는 문자열
 
-    // 클라이언트 소켓에서 데이터 읽기.
+  // 클라이언트 소켓에서 데이터 읽기.
   ssize_t bytesRead = read(clientSocket, buffer, sizeof(buffer) - 1);
 
   if (bytesRead > 0) {
     buffer[bytesRead] = '\0';
-    accumulatedInput += buffer; // 누적 입력에 읽은 데이터 추가하기
+    accumulatedInput += buffer;  // 누적 입력에 읽은 데이터 추가하기
 
     // 누적된 데이터에서 명령어 찾아 처리하기
     size_t pos = 0;
     while ((pos = accumulatedInput.find("\r\n")) != std::string::npos) {
-      std::string command = accumulatedInput.substr(0, pos); // 명령어 추출
+      std::string command = accumulatedInput.substr(0, pos);  // 명령어 추출
       std::cout << "Received: " << command << "$" << std::endl;
-      processCommand(command); // 추출한 명령어 처리하기
-      accumulatedInput.erase(0, pos + 2); // 처리된 명령어는 누적 입력에서 삭제하기
+      processCommand(command);  // 추출한 명령어 처리하기
+      accumulatedInput.erase(
+          0, pos + 2);  // 처리된 명령어는 누적 입력에서 삭제하기
     }
-  } else if (bytesRead == 0) { // 데이터를 읽지 못했고, 클라이언트가 연결을 종료한 경우
+  } else if (bytesRead ==
+             0) {  // 데이터를 읽지 못했고, 클라이언트가 연결을 종료한 경우
     std::cout << "Client disconnected." << std::endl;
     handleDisconnect();
-  } else { // 데이터 읽기 오류 발생
+  } else {  // 데이터 읽기 오류 발생
     std::cerr << "Read error." << std::endl;
     handleDisconnect();
   }
 }
-
 
 // 클라이언트로부터 받은 전체 명령어 처리하기.
 void ClientHandler::processCommand(const std::string& fullCommand) {
@@ -62,7 +63,9 @@ void ClientHandler::processCommand(const std::string& fullCommand) {
   std::string parameters = (spacePos != std::string::npos)
                                ? trimmedCommand.substr(spacePos + 1)
                                : "";
-    // 분리된 명령어와 매개변수를 파싱하는 함수 호출하기
+
+															 std::cout << "command: " << command << std::endl;
+  // 분리된 명령어와 매개변수를 파싱하는 함수 호출하기
   parseCommand(command, parameters);
 }
 
@@ -82,15 +85,17 @@ void ClientHandler::parseCommand(const std::string& command,
     handleModeCommand(parameters);
   } else if (command == "PING") {
     sendMessage(":Server PONG Server :Server");
-  } else if (command == "CAP" || command == "WHOIS" || command == "PASS") {
+  } else if (command == "CAP" || command == "WHOIS") {
     ;
   } else if (command == "KICK") {
     handleKickCommand(parameters);
   } else if (command == "INVITE") {
     handleInviteCommand(parameters);
-  } else if (command == "TOPIC")
-    handleTopicCommand(parameters); 
-  else {
+  } else if (command == "TOPIC") {
+    handleTopicCommand(parameters);
+  } else if (command == "PASS") {
+    handlePassCommand(parameters);
+  } else {
     defaultMessageHandling(command + " " + parameters);
   }
 }
@@ -356,30 +361,34 @@ void ClientHandler::handleKickCommand(const std::string& parameters) {
 }
 
 void ClientHandler::handleTopicCommand(const std::string& parameters) {
-    size_t spacePos = parameters.find(' ');
-    std::string channelName = (spacePos != std::string::npos) ? parameters.substr(0, spacePos) : parameters;
-    std::string newTopic = (spacePos != std::string::npos) ? parameters.substr(spacePos + 1) : "";
-    
-    Channel* channel = server->findChannel(channelName);
-    if (!channel) {
-        sendMessage(":Server 403 " + nickname + " " + channelName + " :No such channel");
-        return;
-    }
+  size_t spacePos = parameters.find(' ');
+  std::string channelName = (spacePos != std::string::npos)
+                                ? parameters.substr(0, spacePos)
+                                : parameters;
+  std::string newTopic =
+      (spacePos != std::string::npos) ? parameters.substr(spacePos + 1) : "";
 
-    if (!channel->isClientMember(this)) {
-        sendMessage(":Server 442 " + channelName + " :You're not on that channel");
-        return;
-    }
+  Channel* channel = server->findChannel(channelName);
+  if (!channel) {
+    sendMessage(":Server 403 " + nickname + " " + channelName +
+                " :No such channel");
+    return;
+  }
 
-    if (channel->getTopicControl() && !channel->isOperator(this)) {
-        sendMessage(":Server 482 " + channelName + " :You're not channel operator");
-        return;
-    }
+  if (!channel->isClientMember(this)) {
+    sendMessage(":Server 442 " + channelName + " :You're not on that channel");
+    return;
+  }
 
-    channel->setTopic(newTopic, nickname);
-    std::string topicMessage = ":" + nickname + "!" + username + "@" + hostname + " TOPIC " + channelName + " :" + newTopic;
-    channel->broadcastMessage(topicMessage, this);
-    
+  if (channel->getTopicControl() && !channel->isOperator(this)) {
+    sendMessage(":Server 482 " + channelName + " :You're not channel operator");
+    return;
+  }
+
+  channel->setTopic(newTopic, nickname);
+  std::string topicMessage = ":" + nickname + "!" + username + "@" + hostname +
+                             " TOPIC " + channelName + " :" + newTopic;
+  channel->broadcastMessage(topicMessage, this);
 }
 
 void ClientHandler::handleInviteCommand(const std::string& parameters) {
@@ -411,6 +420,23 @@ void ClientHandler::handleInviteCommand(const std::string& parameters) {
                           " INVITE " + targetName + " " + channelName;
     target->sendMessage(message);
     channel->broadcastMessage(message, this);
+  }
+}
+
+void ClientHandler::handlePassCommand(const std::string& parameters) {
+	std::cout << "handlePassCommand" << std::endl;
+  if (parameters.empty()) {
+    sendMessage(":Server ERROR :Invalid PASS command format.");
+    return;
+  }
+  if (server->getPassword() != parameters) {
+    sendMessage(":Server NOTICE " + nickname +
+                " :*** Could not resolve your hostname: Request timed out; "
+                "using your IP address (" +
+                hostname + ") instead. ERROR :Closing link: (" + username +
+                "@" + hostname + ") [Access denied by configuration]");
+
+							handleDisconnect();
   }
 }
 

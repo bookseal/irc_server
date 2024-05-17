@@ -33,7 +33,8 @@ class ClientHandler {
   void handleModeCommand(const std::string& parameters);
   void handleKickCommand(const std::string& parameters);
   void handleInviteCommand(const std::string& parameters);
-    void handleTopicCommand(const std::string& parameters);
+  void handleTopicCommand(const std::string& parameters);
+  void handlePassCommand(const std::string& parameters);
   void defaultMessageHandling(const std::string& message);
   void handleChannelMessage(const std::string& channelName,
                             const std::string& message);
@@ -42,7 +43,8 @@ class ClientHandler {
   void joinChannel(Channel* channel, const std::string& channelName,
                    const std::string& password);
   void eraseChannel(Channel* channel);
-  void handleFileTransferMessage(const std::string &target, const std::string &message);
+  void handleFileTransferMessage(const std::string& target,
+                                 const std::string& message);
   void broadcastJoinMessage(Channel* channel, const std::string& channelName);
 
   // Connection management
@@ -57,7 +59,6 @@ class ClientHandler {
   std::string getNickname() const;
   std::string getUsername() const;
   std::string getHostname() const;
-  IRCServer* getServer() const;
 
  private:
   IRCServer* server;

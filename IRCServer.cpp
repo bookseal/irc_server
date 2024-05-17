@@ -211,9 +211,10 @@ void IRCServer::cleanUpInactiveHandlers() {
                 << std::endl;
       close(it->first);   // Close the socket
       delete it->second;  // Delete the handler
-std::map<int, ClientHandler*>::iterator temp = it;  // 임시 이터레이터를 사용하여
-            ++it;  // 이터레이터를 다음 항목으로 이동합니다
-            clientHandlers.erase(temp);  // 맵에서 해당 항목을 제거합니다
+      std::map<int, ClientHandler*>::iterator temp =
+          it;  // 임시 이터레이터를 사용하여
+      ++it;    // 이터레이터를 다음 항목으로 이동합니다
+      clientHandlers.erase(temp);  // 맵에서 해당 항목을 제거합니다
     } else {
       ++it;
     }
@@ -272,3 +273,5 @@ Channel* IRCServer::findChannel(const std::string& name) {
   // 채널이 존재하는 경우 해당 채널의 객체 포인터 반환하기
   return it != channels.end() ? it->second : NULL;
 }
+
+const std::string IRCServer::getPassword() const { return password; }
