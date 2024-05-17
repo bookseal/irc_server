@@ -33,6 +33,7 @@ class ClientHandler {
   void handleModeCommand(const std::string& parameters);
   void handleKickCommand(const std::string& parameters);
   void handleInviteCommand(const std::string& parameters);
+    void handleTopicCommand(const std::string& parameters);
   void defaultMessageHandling(const std::string& message);
   void handleChannelMessage(const std::string& channelName,
                             const std::string& message);
