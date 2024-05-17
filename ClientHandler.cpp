@@ -341,50 +341,32 @@ void ClientHandler::handleKickCommand(const std::string& parameters) {
   }
 }
 
-// TODO
 void ClientHandler::handleTopicCommand(const std::string& parameters) {
-    // Extract the channel name and the ne
     size_t spacePos = parameters.find(' ');
     std::string channelName = (spacePos != std::string::npos) ? parameters.substr(0, spacePos) : parameters;
     std::string newTopic = (spacePos != std::string::npos) ? parameters.substr(spacePos + 1) : "";
-
-    // Find the channel
+    
     Channel* channel = server->findChannel(channelName);
     if (!channel) {
         sendMessage(":Server 403 " + nickname + " " + channelName + " :No such channel");
         return;
     }
 
-    // // Check if the client is a member of the channel
     if (!channel->isClientMember(this)) {
         sendMessage(":Server 442 " + channelName + " :You're not on that channel");
         return;
     }
 
-  // If newTopic is empty, display the current topic
-    if (newTopic.empty()) {
-        std::string currentTopic = channel->getTopic();
-        if (currentTopic.empty()) {
-            sendMessage(":Server 331 " + nickname + " " + channelName + " :No topic is set");
-        } else {
-            sendMessage(":Server 332 " + nickname + " " + channelName + " :" + currentTopic);
-            sendMessage(":Server 333 " + nickname + " " + channelName + " " + channel->getTopicSetter() + " " + std::to_string(channel->getTopicTimestamp()));
-        }
-    } else {
-        // Check if the client has permission to change the topic
-        if (channel->getTopicControl() && !channel->isOperator(this)) {
-            sendMessage(":Server 482 " + channelName + " :You're not channel operator");
-            return;
-        }
-
-        // Set the new topic
-        channel->setTopic(newTopic, nickname);
-        std::string topicMessage = ":" + nickname + "!" + username + "@" + hostname + " TOPIC " + channelName + " :" + newTopic;
-        channel->broadcastMessage(topicMessage, this);
+    if (channel->getTopicControl() && !channel->isOperator(this)) {
+        sendMessage(":Server 482 " + channelName + " :You're not channel operator");
+        return;
     }
+
+    channel->setTopic(newTopic, nickname);
+    std::string topicMessage = ":" + nickname + "!" + username + "@" + hostname + " TOPIC " + channelName + " :" + newTopic;
+    channel->broadcastMessage(topicMessage, this);
+    
 }
-
-
 
 void ClientHandler::handleInviteCommand(const std::string& parameters) {
   std::string targetName;
