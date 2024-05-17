@@ -29,7 +29,7 @@ c5		:
 	docker exec -it irc irssi -c 127.0.0.1 -p 6667 -n five
 
 n1		:
-	docker exec -it irc nc 127.0.0.1 6667
+	docker exec -it irc nc localhost 6667
 
 n2		:
 	docker exec -it irc nc 127.0.0.1 6667

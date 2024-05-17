@@ -4,7 +4,7 @@
 #include "IRCServer.hpp"
 
 ClientHandler::ClientHandler(int socket, IRCServer* server)
-    : clientSocket(socket), server(server), active(true) {}
+    : server(server), clientSocket(socket), active(true) {}
 
 ClientHandler::~ClientHandler() {
   server->unregisterNickname(nickname);
@@ -128,35 +128,38 @@ void ClientHandler::handleModeCommand(const std::string& parameters) {
 }
 
 void ClientHandler::handlePrivMsgCommand(const std::string& parameters) {
-    size_t spacePos = std::string::npos;
-    for (size_t i = 0; i < parameters.size(); ++i) {
-        if (parameters[i] == ' ') {
-            spacePos = i;
-            break;
-        }
+  size_t spacePos = std::string::npos;
+  for (size_t i = 0; i < parameters.size(); ++i) {
+    if (parameters[i] == ' ') {
+      spacePos = i;
+      break;
     }
-    if (spacePos == std::string::npos) {
-        sendMessage(":Server ERROR :Invalid PRIVMSG format.");
-        return;
-    }
-    std::string target = parameters.substr(0, spacePos);
-    std::string message = parameters.substr(spacePos + 2);
-    if (!target.empty() && target[0] == '#') {
-        handleChannelMessage(target, message);
-    }
-    // 127.000.000.001.47160-127.000.000.001.06667: PRIVMSG nick2 :.DCC SEND infile 2130706433 45651 21.
-    else if (message.find(".DCC SEND") != std::string::npos){
-      handleFileTransferMessage(target, message);
-    } else {
+  }
+  if (spacePos == std::string::npos) {
+    sendMessage(":Server ERROR :Invalid PRIVMSG format.");
+    return;
+  }
+  std::string target = parameters.substr(0, spacePos);
+  std::string message = parameters.substr(spacePos + 2);
+  if (!target.empty() && target[0] == '#') {
+    handleChannelMessage(target, message);
+  }
+  // 127.000.000.001.47160-127.000.000.001.06667: PRIVMSG nick2 :.DCC SEND
+  // infile 2130706433 45651 21.
+  else if (message.find(".DCC SEND") != std::string::npos) {
+    handleFileTransferMessage(target, message);
+  } else {
     server->sendMessageToUser(nickname, target, message);
   }
 }
 
-void ClientHandler::handleFileTransferMessage(const std::string& target, const std::string& parameters) {
-    // Example: .DCC SEND infile 2130706433 45651 21
-    // 127.000.000.001.06667-127.000.000.001.42146: :nick1!root@127.0.0.1 PRIVMSG nick2 :.DCC SEND infile 2130706433 45651 21.
-    std::string message = parameters;
-    server->sendMessageToUser(nickname, target, message);
+void ClientHandler::handleFileTransferMessage(const std::string& target,
+                                              const std::string& parameters) {
+  // Example: .DCC SEND infile 2130706433 45651 21
+  // 127.000.000.001.06667-127.000.000.001.42146: :nick1!root@127.0.0.1 PRIVMSG
+  // nick2 :.DCC SEND infile 2130706433 45651 21.
+  std::string message = parameters;
+  server->sendMessageToUser(nickname, target, message);
 }
 
 void ClientHandler::defaultMessageHandling(const std::string& message) {
@@ -266,7 +269,7 @@ bool ClientHandler::isAlreadyInChannel(const std::string& channelName) {
 
 Channel* ClientHandler::getOrCreateChannel(const std::string& channelName) {
   Channel* channel = server->findChannel(channelName);
-  if (channel == nullptr) {
+  if (channel == NULL) {
     server->createChannel(channelName);
     channel = server->findChannel(channelName);
   }
@@ -283,7 +286,7 @@ void ClientHandler::joinChannel(Channel* channel,
     sendMessage(":Server 471 " + nickname + " " + channelName +
                 " :Cannot join channel (+l) - channel is full");
   } else if (channel->checkPassword(password)) {
-    channel->addClient(this, password);
+    channel->addClient(this);
     channels.insert(channelName);
     broadcastJoinMessage(channel, channelName);
   } else {
@@ -328,7 +331,7 @@ void ClientHandler::handleKickCommand(const std::string& parameters) {
     return;
   }
   Channel* channel = server->findChannel(channelName);
-  if (channel == nullptr) {
+  if (channel == NULL) {
     return;
   }
   ClientHandler* target = server->findClientHandlerByNickname(targetName);
@@ -390,9 +393,9 @@ void ClientHandler::handleInviteCommand(const std::string& parameters) {
   }
   ClientHandler* target = server->findClientHandlerByNickname(targetName);
   Channel* channel = server->findChannel(channelName);
-  if (target == nullptr) {
+  if (target == NULL) {
     sendMessage(":Server ERROR :No such nick " + targetName);
-  } else if (channel == nullptr) {
+  } else if (channel == NULL) {
     sendMessage(":Server ERROR :No such channel " + channelName);
   } else if (!channel->isClientMember(this)) {
     sendMessage(":Server ERROR :You are not on channel " + channelName);
@@ -441,4 +444,6 @@ std::string ClientHandler::getHostname() const { return hostname; }
 
 bool ClientHandler::isActive() const { return active; }
 
-void ClientHandler::eraseChannel(Channel* channel) { channels.erase(channel->getName()); }
+void ClientHandler::eraseChannel(Channel* channel) {
+  channels.erase(channel->getName());
+}
