@@ -192,16 +192,17 @@ void ClientHandler::handleNickCommand(const std::string& parameters) {
     if (!nickname.empty() && nickname != newNickname) {
       server->unregisterNickname(nickname);
     }
+  } else {
+      while (!server->isNicknameAvailable(newNickname)) {
+          newNickname += "_";
+      }
+  }
     server->registerNickname(newNickname, this);
     nickname = newNickname;
     sendMessage(":" + nickname + "!" + username + "@" + hostname +
                 " NICK :" + nickname);
     sendMessage(":Server NOTICE " + nickname + " :Nickname set to " +
                 newNickname);
-  } else {
-    sendMessage(":Server 433 " + nickname + " " + newNickname +
-                " :Nickname is already in use");
-  }
 }
 
 void ClientHandler::handleUserCommand(const std::string& parameters) {
