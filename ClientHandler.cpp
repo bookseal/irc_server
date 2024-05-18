@@ -441,7 +441,6 @@ void ClientHandler::handleInviteCommand(const std::string& parameters) {
 }
 
 void ClientHandler::handlePassCommand(const std::string& parameters) {
-  std::cout << "handlePassCommand" << std::endl;
   if (parameters.empty()) {
     sendMessage(":Server ERROR :Invalid PASS command format.");
     return;

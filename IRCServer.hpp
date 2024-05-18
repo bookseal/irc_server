@@ -32,7 +32,6 @@ class IRCServer {
   ClientHandler* findClientHandlerByNickname(const std::string& nickname);
 
   void createChannel(const std::string& channelName);
-  void deleteChannel(const std::string& channelName);
   Channel* findChannel(const std::string& channelName);
 
   void sendMessageToUser(const std::string& senderNickname,

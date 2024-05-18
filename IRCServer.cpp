@@ -50,6 +50,10 @@ IRCServer::~IRCServer() {
        it != clientHandlers.end(); ++it) {
     delete it->second;
   }
+	for (std::map<std::string, Channel*>::iterator it = channels.begin();
+			 it != channels.end(); ++it) {
+		delete it->second;
+	}
 }
 
 bool IRCServer::initializeServerSocket() {
@@ -253,17 +257,6 @@ void IRCServer::createChannel(const std::string& name) {
   // 해당 이름의 채널이 이미 존재하지 않는 경우 새 채널 생성하기
   if (channels.find(name) == channels.end()) {
     channels[name] = new Channel(name);
-  }
-}
-
-void IRCServer::deleteChannel(const std::string& name) {
-  // 채널 목록에서 해당 이름의 채널 찾기
-  std::map<std::string, Channel*>::iterator it = channels.find(name);
-
-  // 채널이 존재하고 비어있는 경우, 채널 삭제하기
-  if (it != channels.end() && it->second->isEmpty()) {
-    delete it->second;   // 객체를 메모리에서 해제
-    channels.erase(it);  // 목록에서 해당 채널 삭제
   }
 }
 

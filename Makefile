@@ -7,7 +7,7 @@ SRCS		= main.cpp \
 
 OBJS		= $(SRCS:%.cpp=%.o)
 CXXFLAGS	= -Wall -Wextra -Werror -std=c++98
-CXXFLAGS	+= -g3
+# CXXFLAGS	+= -g3
 
 RM			+= -f
 %.o: %.cpp
