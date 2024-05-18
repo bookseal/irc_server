@@ -22,7 +22,7 @@ void ClientHandler::processInput() {
     accumulatedInput += buffer;
 
     size_t pos = 0;
-    while ((pos = accumulatedInput.find("\r\n")) != std::string::npos) {
+    while ((pos = accumulatedInput.find("\n")) != std::string::npos) {
       std::string command = accumulatedInput.substr(0, pos); 
       std::cout << "Received: " << command << "$" << std::endl;
       processCommand(command);
