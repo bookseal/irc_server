@@ -4,12 +4,11 @@
 #include <string>
 #include <set>
 #include <map>
-#include <ctime> // For time_t
+#include <ctime>
 
 
-class ClientHandler; // Forward declaration
-class IRCServer; // Forward declaration
-
+class ClientHandler;
+class IRCServer;
 class Channel {
 public:
     Channel(const std::string& name);

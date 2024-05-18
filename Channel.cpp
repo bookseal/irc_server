@@ -137,12 +137,6 @@ const std::string& Channel::getName() const {
     return name;
 }
 
-// void Channel::addClient(ClientHandler* client, const std::string& password) {
-//     clients.insert(std::make_pair(client, true));
-//     if (operators.empty()) {
-//         addOperator(client);
-//     }
-// }
 void Channel::addClient(ClientHandler* client, const std::string& password) {
     clients.insert(std::make_pair(client, true));
     if (operators.empty()) {
@@ -185,10 +179,12 @@ void Channel::removeOperator(ClientHandler* client) {
     }
 }
 
+
+
 void Channel::broadcastMessage(const std::string& message, ClientHandler* sender) {
     std::map<ClientHandler*, bool>::iterator it;
     for (it = clients.begin(); it != clients.end(); ++it) {
-        if (sender == nullptr || it->first != sender) {
+        if (sender == NULL || it->first != sender) {
             it->first->sendMessage(message);
         }
     }
@@ -233,7 +229,7 @@ void Channel::setTopic(const std::string& newTopic, const std::string& setter) {
     topicSetter = setter;
     topicTimestamp = std::time(nullptr);
     std::string topicMessage = ":" + setter + " TOPIC " + name + " :" + newTopic;
-    broadcastMessage(topicMessage, nullptr);
+    // broadcastMessage(topicMessage, NULL);
 }
 
 bool Channel::getTopicControl() const {

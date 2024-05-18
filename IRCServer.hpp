@@ -33,15 +33,15 @@ public:
     Channel* findChannel(const std::string& channelName);
 
     void sendMessageToUser(const std::string& senderNickname, const std::string& recipientNickname, const std::string& message);
+
 private:
-    int port; // 큰 빌딩의 사무실 번호 (RC 서버가 포트 6667에 바인드 됩. 6667: 빌딩번호)
-    int serverSocket; // 서버의 "문" 역할
+    int port;
+    int serverSocket;
     std::vector<struct pollfd> fds;
     std::map<int, ClientHandler*> clientHandlers;
     std::map<std::string, ClientHandler*> activeNicknames;
     std::map<std::string, Channel*> channels;
 
 };
-
 
 #endif
