@@ -268,12 +268,20 @@ Channel* ClientHandler::getOrCreateChannel(const std::string& channelName) {
 }
 
 bool ClientHandler::joinChannel(Channel* channel, const std::string& channelName, const std::string& password) {
-    if (channel->isInviteOnly()) {
-        sendMessage(":Server 473 " + nickname + " " + channelName + " :Cannot join channel (+i) - invite only");
-        return false;
-    } else if (channel->isFull()) {
+    if (channel->isFull()) {
         sendMessage(":Server 471 " + nickname + " " + channelName + " :Cannot join channel (+l) - channel is full");
         return false;
+    } else if (channel->isInviteOnly()) {
+        std::cout << "Checking invitation\n";
+        if (channel->checkInvitation((this))) {
+            channel->addClient(this);
+            channels.insert(channelName);
+            broadcastJoinMessage(channel, channelName);
+            return true;
+        } else {
+            sendMessage(":Server 473 " + nickname + " " + channelName + " :Cannot join channel (+i) - invite only");
+            return false;
+        }
     } else if (channel->checkPassword(password)) {
         channel->addClient(this);
         channels.insert(channelName);
@@ -311,6 +319,7 @@ void ClientHandler::handleLeaveCommand(const std::string& parameters) {
   Channel* channel = server->findChannel(parameters);
   if (channel) {
     channel->removeClient(this);
+    channel->removeInvitation(this);
     channels.erase(parameters);
     sendMessage(":" + nickname + "!" + username + "@" + hostname +
                 " PART :" + parameters);
@@ -406,6 +415,7 @@ void ClientHandler::handleInviteCommand(const std::string& parameters) {
   } else {
     std::string message = ":" + nickname + "!" + username + "@" + hostname +
                           " INVITE " + targetName + " " + channelName;
+    channel->inviteClient(target);
     target->sendMessage(message);
     channel->broadcastMessage(message, this);
   }

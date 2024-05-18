@@ -241,3 +241,18 @@ void Channel::setTopic(const std::string& newTopic, const std::string& setter) {
 }
 
 bool Channel::getTopicControl() const { return topicControl; }
+
+bool Channel::checkInvitation(ClientHandler *client) {
+    std::cout << "Checking invitation for " << client->getNickname() << std::endl;
+    std::cout << "Invited size: " << invited.size() << std::endl;
+    std::cout << "Invited contains client: " << (invited.find(client) != invited.end()) << std::endl;
+    return invited.find(client) != invited.end();
+}
+void Channel::inviteClient(ClientHandler *client){
+    invited.insert(client);
+}
+void Channel::removeInvitation(ClientHandler *client){
+    if (invited.find(client) != invited.end()) {
+        invited.erase(client);
+    }
+}

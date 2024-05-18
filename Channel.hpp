@@ -64,11 +64,15 @@ class Channel {
   void setTopic(const std::string& newTopic,
                 const std::string& setter);  // Set a new topic
 
+bool checkInvitation(ClientHandler *client);
+void inviteClient(ClientHandler *client);
+void removeInvitation(ClientHandler *client);
  private:
   std::string name;
   std::map<ClientHandler*, bool> clients;  // Maps clients to a bool (typically
                                            // if they are active/not banned)
   std::set<ClientHandler*> operators;      // Set of operators in this channel
+  std::set<ClientHandler*> invited;        // Set of invited clients
   bool inviteOnly;                         // Whether the channel is invite-only
   bool topicControl;  // Whether topic control is restricted to operators
   std::string channelPassword;  // Optional password for the channel
