@@ -275,7 +275,7 @@ bool ClientHandler::joinChannel(Channel* channel, const std::string& channelName
         sendMessage(":Server 471 " + nickname + " " + channelName + " :Cannot join channel (+l) - channel is full");
         return false;
     } else if (channel->checkPassword(password)) {
-        channel->addClient(this, password);
+        channel->addClient(this);
         channels.insert(channelName);
         broadcastJoinMessage(channel, channelName);
         return true;
