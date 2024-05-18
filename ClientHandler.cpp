@@ -23,10 +23,11 @@ void ClientHandler::processInput() {
 
     size_t pos = 0;
     while ((pos = accumulatedInput.find("\n")) != std::string::npos) {
-      std::string command = accumulatedInput.substr(0, pos); 
+        std::cout << "accumulatedInput: " << accumulatedInput << std::endl;
+      std::string command = accumulatedInput.substr(0, pos);
       std::cout << "Received: " << command << "$" << std::endl;
       processCommand(command);
-      accumulatedInput.erase(0, pos + 2);
+      accumulatedInput.erase(0, pos + 1);
     }
   } else if (bytesRead == 0) {
     std::cout << "Client disconnected." << std::endl;
