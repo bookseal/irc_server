@@ -137,8 +137,6 @@ void ClientHandler::handlePrivMsgCommand(const std::string& parameters) {
   if (!target.empty() && target[0] == '#') {
     handleChannelMessage(target, message);
   }
-  // 127.000.000.001.47160-127.000.000.001.06667: PRIVMSG nick2 :.DCC SEND
-  // infile 2130706433 45651 21.
   else if (message.find(".DCC SEND") != std::string::npos) {
     handleFileTransferMessage(target, message);
   } else {
@@ -148,9 +146,6 @@ void ClientHandler::handlePrivMsgCommand(const std::string& parameters) {
 
 void ClientHandler::handleFileTransferMessage(const std::string& target,
                                               const std::string& parameters) {
-  // Example: .DCC SEND infile 2130706433 45651 21
-  // 127.000.000.001.06667-127.000.000.001.42146: :nick1!root@127.0.0.1 PRIVMSG
-  // nick2 :.DCC SEND infile 2130706433 45651 21.
   std::string message = parameters;
   server->sendMessageToUser(nickname, target, message);
 }
@@ -356,11 +351,9 @@ void ClientHandler::handleKickCommand(const std::string& parameters) {
   }
   ClientHandler* target = server->findClientHandlerByNickname(targetName);
 
-  // kick하는 주체가 그 채널의 operator인지 확인
   if (!channel->isOperator(this)) {
     sendMessage("Server ERROR :You are not an operator in channel " +
                 channelName + "\r\n");
-    // 그 채널에 target이 있는지 확인
   } else if (channel->isClientMember(target)) {
     std::string message = ":" + nickname + "!" + username + "@" + hostname +
                           " KICK " + channel->getChannelName() + " " +
@@ -376,19 +369,15 @@ void ClientHandler::handleKickCommand(const std::string& parameters) {
 }
 
 void ClientHandler::handleTopicCommand(const std::string& parameters) {
-  size_t spacePos = parameters.find(' ');
-  std::string channelName = (spacePos != std::string::npos)
-                                ? parameters.substr(0, spacePos)
-                                : parameters;
-  std::string newTopic =
-      (spacePos != std::string::npos) ? parameters.substr(spacePos + 1) : "";
-
-  Channel* channel = server->findChannel(channelName);
-  if (!channel) {
-    sendMessage(":Server 403 " + nickname + " " + channelName +
-                " :No such channel");
-    return;
-  }
+    size_t spacePos = parameters.find(' ');
+    std::string channelName = (spacePos != std::string::npos) ? parameters.substr(0, spacePos) : parameters;
+    std::string newTopic = (spacePos != std::string::npos) ? parameters.substr(spacePos + 1) : "";
+    
+    Channel* channel = server->findChannel(channelName);
+    if (!channel) {
+        sendMessage(":Server 403 " + nickname + " " + channelName + " :No such channel");
+        return;
+    }
 
   if (!channel->isClientMember(this)) {
     sendMessage(":Server 442 " + channelName + " :You're not on that channel");
