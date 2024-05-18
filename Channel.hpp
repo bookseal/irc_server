@@ -5,10 +5,10 @@
 #include <set>
 #include <sstream>
 #include <string>
+#include <ctime> // For time_t
 
-class ClientHandler;  // Forward declaration
-class IRCServer;      // Forward declaration
-
+class ClientHandler; 
+class IRCServer;     
 class Channel {
  public:
   Channel(const std::string& name);
@@ -75,7 +75,7 @@ class Channel {
   size_t maxClients;        // Maximum number of clients allowed in the channel
   std::string topic;        // The current topic of the channel
   std::string topicSetter;  // The nickname of the user who set the topic
-  // std::time_t topicTimestamp;  // The time when the topic was set
+
 };
 
 #endif  // CHANNEL_HPP

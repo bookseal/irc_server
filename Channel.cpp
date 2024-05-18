@@ -198,6 +198,8 @@ void Channel::removeOperator(ClientHandler* client) {
   }
 }
 
+
+
 void Channel::broadcastMessage(const std::string& message,
                                ClientHandler* sender) {
   std::map<ClientHandler*, bool>::iterator it;
@@ -233,11 +235,9 @@ const std::string& Channel::getTopicSetter() const { return topicSetter; }
 // std::time_t Channel::getTopicTimestamp() const { return topicTimestamp; }
 
 void Channel::setTopic(const std::string& newTopic, const std::string& setter) {
-  topic = newTopic;
-  topicSetter = setter;
-  // topicTimestamp = std::time(nullptr);
-  std::string topicMessage = ":" + setter + " TOPIC " + name + " :" + newTopic;
-  broadcastMessage(topicMessage, NULL);
+    topic = newTopic;
+    topicSetter = setter;
+    std::string topicMessage = ":" + setter + " TOPIC " + name + " :" + newTopic;
 }
 
 bool Channel::getTopicControl() const { return topicControl; }

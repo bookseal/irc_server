@@ -40,7 +40,9 @@ class ClientHandler {
                             const std::string& message);
   bool isAlreadyInChannel(const std::string& channelName);
   Channel* getOrCreateChannel(const std::string& channelName);
-  void joinChannel(Channel* channel, const std::string& channelName,
+  // void joinChannel(Channel* channel, const std::string& channelName,
+  //                  const std::string& password);
+  bool joinChannel(Channel* channel, const std::string& channelName,
                    const std::string& password);
   void eraseChannel(Channel* channel);
   void handleFileTransferMessage(const std::string& target,
