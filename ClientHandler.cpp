@@ -1,4 +1,5 @@
 #include "ClientHandler.hpp"
+
 #include "Channel.hpp"
 #include "IRCServer.hpp"
 
@@ -11,9 +12,9 @@ ClientHandler::~ClientHandler() {
 }
 
 void ClientHandler::processInput() {
-  const size_t bufferSize = 1024; 
+  const size_t bufferSize = 1024;
   char buffer[bufferSize];
-  static std::string accumulatedInput; 
+  static std::string accumulatedInput;
 
   ssize_t bytesRead = read(clientSocket, buffer, sizeof(buffer) - 1);
 
@@ -193,16 +194,16 @@ void ClientHandler::handleNickCommand(const std::string& parameters) {
       server->unregisterNickname(nickname);
     }
   } else {
-      while (!server->isNicknameAvailable(newNickname)) {
-          newNickname += "_";
-      }
+    while (!server->isNicknameAvailable(newNickname)) {
+      newNickname += "_";
+    }
   }
-    server->registerNickname(newNickname, this);
-    nickname = newNickname;
-    sendMessage(":" + nickname + "!" + username + "@" + hostname +
-                " NICK :" + nickname);
-    sendMessage(":Server NOTICE " + nickname + " :Nickname set to " +
-                newNickname);
+  server->registerNickname(newNickname, this);
+  nickname = newNickname;
+  sendMessage(":" + nickname + "!" + username + "@" + hostname +
+              " NICK :" + nickname);
+  sendMessage(":Server NOTICE " + nickname + " :Nickname set to " +
+              newNickname);
 }
 
 void ClientHandler::handleUserCommand(const std::string& parameters) {
@@ -224,30 +225,32 @@ void ClientHandler::handleUserCommand(const std::string& parameters) {
 }
 
 void ClientHandler::handleJoinCommand(const std::string& parameters) {
-    if (parameters == ":" || parameters.empty()) {
-        sendMessage(":Server 451 * JOIN :You have not registered.");
-        return;
-    }
+  if (parameters == ":" || parameters.empty()) {
+    sendMessage(":Server 451 * JOIN :You have not registered.");
+    return;
+  }
 
-    std::size_t firstSpace = parameters.find(' ');
-    std::string channelName = parameters.substr(0, firstSpace);
-    std::string password = (firstSpace != std::string::npos) ? parameters.substr(firstSpace + 1) : "";
+  std::size_t firstSpace = parameters.find(' ');
+  std::string channelName = parameters.substr(0, firstSpace);
+  std::string password = (firstSpace != std::string::npos)
+                             ? parameters.substr(firstSpace + 1)
+                             : "";
 
-    if (channelName.empty()) {
-        sendMessage(":Server 451 * JOIN :You have not specified a channel name.");
-        return;
-    }
-    if (isAlreadyInChannel(channelName)) {
-        return;
-    }
+  if (channelName.empty()) {
+    sendMessage(":Server 451 * JOIN :You have not specified a channel name.");
+    return;
+  }
+  if (isAlreadyInChannel(channelName)) {
+    return;
+  }
 
-    Channel* channel = getOrCreateChannel(channelName);
-    if (channel) {
-        if (joinChannel(channel, channelName, password)) { 
-        }
-    } else {
-        sendMessage(":Server 403 " + channelName + " :No such channel");
+  Channel* channel = getOrCreateChannel(channelName);
+  if (channel) {
+    if (joinChannel(channel, channelName, password)) {
     }
+  } else {
+    sendMessage(":Server 403 " + channelName + " :No such channel");
+  }
 }
 
 bool ClientHandler::isAlreadyInChannel(const std::string& channelName) {
@@ -268,49 +271,60 @@ Channel* ClientHandler::getOrCreateChannel(const std::string& channelName) {
   return channel;
 }
 
-bool ClientHandler::joinChannel(Channel* channel, const std::string& channelName, const std::string& password) {
-    if (channel->isFull()) {
-        sendMessage(":Server 471 " + nickname + " " + channelName + " :Cannot join channel (+l) - channel is full");
-        return false;
-    } else if (channel->isInviteOnly()) {
-        std::cout << "Checking invitation\n";
-        if (channel->checkInvitation((this))) {
-            channel->addClient(this);
-            channels.insert(channelName);
-            broadcastJoinMessage(channel, channelName);
-            return true;
-        } else {
-            sendMessage(":Server 473 " + nickname + " " + channelName + " :Cannot join channel (+i) - invite only");
-            return false;
-        }
-    } else if (channel->checkPassword(password)) {
-        channel->addClient(this);
-        channels.insert(channelName);
-        broadcastJoinMessage(channel, channelName);
-        return true;
+bool ClientHandler::joinChannel(Channel* channel,
+                                const std::string& channelName,
+                                const std::string& password) {
+  if (channel->isFull()) {
+    sendMessage(":Server 471 " + nickname + " " + channelName +
+                " :Cannot join channel (+l) - channel is full");
+    return false;
+  } else if (channel->isInviteOnly()) {
+    std::cout << "Checking invitation\n";
+    if (channel->checkInvitation((this))) {
+      channel->addClient(this);
+      channels.insert(channelName);
+      broadcastJoinMessage(channel, channelName);
+      return true;
     } else {
-        sendMessage(":Server 475 " + nickname + " " + channelName + " :Cannot join channel (+k) - bad key");
-        return false;
+      sendMessage(":Server 473 " + nickname + " " + channelName +
+                  " :Cannot join channel (+i) - invite only");
+      return false;
     }
+  } else if (channel->checkPassword(password)) {
+    channel->addClient(this);
+    channels.insert(channelName);
+    broadcastJoinMessage(channel, channelName);
+    return true;
+  } else {
+    sendMessage(":Server 475 " + nickname + " " + channelName +
+                " :Cannot join channel (+k) - bad key");
+    return false;
+  }
 }
 
-void ClientHandler::broadcastJoinMessage(Channel* channel, const std::string& channelName) {
-    std::string message = ":" + nickname + "!" + username + "@" + hostname + 
-                          " JOIN :" + channelName + "\r\n";
-    message += ":Server 353 " + nickname + " = " + channelName + " :" +
-               channel->getClientList() + "\r\n";
-    message += ":Server 366 " + nickname + " " + channelName + " :End of /NAMES list.";
-    sendMessage(message);
+void ClientHandler::broadcastJoinMessage(Channel* channel,
+                                         const std::string& channelName) {
+  std::string message = ":" + nickname + "!" + username + "@" + hostname +
+                        " JOIN :" + channelName + "\r\n";
+  message += ":Server 353 " + nickname + " = " + channelName + " :" +
+             channel->getClientList() + "\r\n";
+  message +=
+      ":Server 366 " + nickname + " " + channelName + " :End of /NAMES list.";
+  sendMessage(message);
 
-    channel->broadcastMessage(message, this);
-    std::string welcomeMessage = "-------------------------- Welcome to " + channelName + ", " + nickname + "!" + 
-                                " We're glad to have you here. Here are a few things to get you started: Be respectful and follow the channel rules." + 
-                                " If you need any help, feel free to ask the operators! Enjoy your stay!" + 
-                                " ----------------------------";
+  channel->broadcastMessage(message, this);
+  std::string welcomeMessage =
+      "-------------------------- Welcome to " + channelName + ", " + nickname +
+      "!" +
+      " We're glad to have you here. Here are a few things to get you started: "
+      "Be respectful and follow the channel rules." +
+      " If you need any help, feel free to ask the operators! Enjoy your "
+      "stay!" +
+      " ----------------------------";
 
-    sendMessage(":" + nickname + "!" + username + "@" + hostname + " PRIVMSG " + channelName + " :" + welcomeMessage);
+  sendMessage(":" + nickname + "!" + username + "@" + hostname + " PRIVMSG " +
+              channelName + " :" + welcomeMessage);
 }
-
 
 void ClientHandler::handleLeaveCommand(const std::string& parameters) {
   if (channels.find(parameters) == channels.end()) {
@@ -362,16 +376,19 @@ void ClientHandler::handleKickCommand(const std::string& parameters) {
 }
 
 void ClientHandler::handleTopicCommand(const std::string& parameters) {
-  std::cout << "hihi\n";
-    size_t spacePos = parameters.find(' ');
-    std::string channelName = (spacePos != std::string::npos) ? parameters.substr(0, spacePos) : parameters;
-    std::string newTopic = (spacePos != std::string::npos) ? parameters.substr(spacePos + 1) : "";
-    
-    Channel* channel = server->findChannel(channelName);
-    if (!channel) {
-        sendMessage(":Server 403 " + nickname + " " + channelName + " :No such channel");
-        return;
-    }
+  size_t spacePos = parameters.find(' ');
+  std::string channelName = (spacePos != std::string::npos)
+                                ? parameters.substr(0, spacePos)
+                                : parameters;
+  std::string newTopic =
+      (spacePos != std::string::npos) ? parameters.substr(spacePos + 1) : "";
+
+  Channel* channel = server->findChannel(channelName);
+  if (!channel) {
+    sendMessage(":Server 403 " + nickname + " " + channelName +
+                " :No such channel");
+    return;
+  }
 
   if (!channel->isClientMember(this)) {
     sendMessage(":Server 442 " + channelName + " :You're not on that channel");
@@ -383,10 +400,11 @@ void ClientHandler::handleTopicCommand(const std::string& parameters) {
     return;
   }
 
-    channel->setTopic(newTopic, nickname);
-    std::string topicMessage = ":" + nickname + "!" + username + "@" + hostname + " TOPIC " + channelName + " :" + newTopic;
+  channel->setTopic(newTopic, nickname);
+  std::string topicMessage = ":" + nickname + "!" + username + "@" + hostname +
+                             " TOPIC " + channelName + " :" + newTopic;
 
-    channel->broadcastMessage(topicMessage, NULL);
+  channel->broadcastMessage(topicMessage, NULL);
 }
 
 void ClientHandler::handleInviteCommand(const std::string& parameters) {
@@ -423,7 +441,7 @@ void ClientHandler::handleInviteCommand(const std::string& parameters) {
 }
 
 void ClientHandler::handlePassCommand(const std::string& parameters) {
-	std::cout << "handlePassCommand" << std::endl;
+  std::cout << "handlePassCommand" << std::endl;
   if (parameters.empty()) {
     sendMessage(":Server ERROR :Invalid PASS command format.");
     return;
@@ -435,7 +453,7 @@ void ClientHandler::handlePassCommand(const std::string& parameters) {
                 hostname + ") instead. ERROR :Closing link: (" + username +
                 "@" + hostname + ") [Access denied by configuration]");
 
-							handleDisconnect();
+    handleDisconnect();
   }
 }
 
