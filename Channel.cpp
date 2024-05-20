@@ -11,9 +11,7 @@ void Channel::setMode(const std::string& mode, ClientHandler* operatorHandler) {
     return;
   }
 
-  std::string modeFlag =
-      mode.substr(0, 2);  // Store the mode flag for easier comparison
-
+  std::string modeFlag = mode.substr(0, 2);
   if (modeFlag == "+i") {
     setInviteMode(true, operatorHandler);
   } else if (modeFlag == "-i") {
@@ -23,10 +21,13 @@ void Channel::setMode(const std::string& mode, ClientHandler* operatorHandler) {
   } else if (modeFlag == "-t") {
     setTopicControlMode(false, operatorHandler);
   } else if (modeFlag == "+k") {
-    std::string password = mode.substr(3);  // Get the password following "+k "
-    if (!password.empty()) {
-      setPasswordMode(password, operatorHandler);
+    if (mode.length() > 2) {
+      std::string password = mode.substr(3);
+      if (!password.empty())
+        setPasswordMode(password, operatorHandler);
     }
+    else
+      operatorHandler->sendMessage(":Server 461 " + operatorHandler->getNickname() + " " + name + " :Not enough parameters");
   } else if (modeFlag == "-k" && hasPassword()) {
     removePasswordMode(operatorHandler);
   } else if (modeFlag == "+l") {
