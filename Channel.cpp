@@ -11,9 +11,7 @@ void Channel::setMode(const std::string& mode, ClientHandler* operatorHandler) {
     return;
   }
 
-  std::string modeFlag =
-      mode.substr(0, 2);  // Store the mode flag for easier comparison
-
+  std::string modeFlag = mode.substr(0, 2);
   if (modeFlag == "+i") {
     setInviteMode(true, operatorHandler);
   } else if (modeFlag == "-i") {
@@ -23,31 +21,34 @@ void Channel::setMode(const std::string& mode, ClientHandler* operatorHandler) {
   } else if (modeFlag == "-t") {
     setTopicControlMode(false, operatorHandler);
   } else if (modeFlag == "+k") {
-    std::string password = mode.substr(3);  // Get the password following "+k "
-    if (!password.empty()) {
-      setPasswordMode(password, operatorHandler);
+    if (mode.length() > 2) {
+      std::string password = mode.substr(3);
+      if (!password.empty())
+        setPasswordMode(password, operatorHandler);
     }
+    else
+      operatorHandler->sendMessage(":Server 461 " + operatorHandler->getNickname() + " " + name + " :Not enough parameters");
   } else if (modeFlag == "-k" && hasPassword()) {
     removePasswordMode(operatorHandler);
   } else if (modeFlag == "+l") {
-    std::string limit = mode.substr(3);  // Get the limit following "+l "
-    if (!limit.empty()) {
-      int limitValue = 0;
-      bool valid = true;
-      for (size_t i = 0; i < limit.length(); ++i) {
-        if (!isdigit(limit[i])) {
-          valid = false;
-          break;
+     if (mode.length() > 2) {  // Check if there are more characters after "+l"
+        std::string limit = mode.substr(3);  // Get the limit following "+l"
+        int limitValue = 0;
+        bool valid = true;
+        for (size_t i = 0; i < limit.length(); ++i) {
+            if (!isdigit(limit[i])) {
+                valid = false;
+                break;
+            }
+            limitValue = limitValue * 10 + (limit[i] - '0');
         }
-        limitValue = limitValue * 10 + (limit[i] - '0');
-      }
-      if (valid && limitValue > 0) {
-        setLimit(limitValue, operatorHandler);
-      } else {
-        operatorHandler->sendMessage(
-            ":Server 473 " + operatorHandler->getNickname() + " " + name +
-            " :Channel limit must be greater than 0.");
-      }
+        if (valid && limitValue > 0) {
+            setLimit(limitValue, operatorHandler);
+        } else {
+            operatorHandler->sendMessage(":Server 473 " + operatorHandler->getNickname() + " :Channel limit must be a number greater than 0.");
+        }
+    } else {
+        setLimit(0, operatorHandler); // 제한을 0으로 둬서 -l 효과가 됨.
     }
   } else if (modeFlag == "-l") {
     setLimit(0, operatorHandler);
