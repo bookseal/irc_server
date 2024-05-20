@@ -2,6 +2,7 @@
 
 #include "Channel.hpp"
 #include "ClientHandler.hpp"
+struct termios IRCServer::orig_termios;
 
 // IRC서버에서 특정 사용자에게 메세지 전송
 void IRCServer::sendMessageToUser(const std::string& senderNickname,
@@ -42,7 +43,11 @@ void IRCServer::sendMessageToUser(const std::string& senderNickname,
 }
 
 IRCServer::IRCServer(const int port, const std::string password)
-    : port(port), password(password), serverSocket(-1) {}
+    : port(port), password(password), serverSocket(-1) {
+  tcgetattr(STDIN_FILENO, &orig_termios);
+  signal(SIGTSTP, handleSigtstp);
+  signal(SIGCONT, handleSigcont);
+}
 
 IRCServer::~IRCServer() {
   close(serverSocket);
@@ -50,10 +55,10 @@ IRCServer::~IRCServer() {
        it != clientHandlers.end(); ++it) {
     delete it->second;
   }
-	for (std::map<std::string, Channel*>::iterator it = channels.begin();
-			 it != channels.end(); ++it) {
-		delete it->second;
-	}
+  for (std::map<std::string, Channel*>::iterator it = channels.begin();
+       it != channels.end(); ++it) {
+    delete it->second;
+  }
 }
 
 bool IRCServer::initializeServerSocket() {
@@ -268,3 +273,15 @@ Channel* IRCServer::findChannel(const std::string& name) {
 }
 
 const std::string IRCServer::getPassword() const { return password; }
+
+void IRCServer::handleSigtstp(int signum) {
+  (void)signum;
+  tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios);
+  signal(SIGTSTP, SIG_DFL);
+  raise(SIGTSTP);
+}
+
+void IRCServer::handleSigcont(int signum) {
+  (void)signum;
+  tcgetattr(STDIN_FILENO, &orig_termios);
+}

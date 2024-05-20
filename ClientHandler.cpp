@@ -27,6 +27,7 @@ void ClientHandler::processInput() {
       std::string command = accumulatedInput.substr(0, pos - 1);
       std::cout << "Received : " << command << "$" << std::endl;
       processCommand(command);
+      // TODO: check \r
       accumulatedInput.erase(0, pos + 1);
     }
   } else if (bytesRead == 0) {

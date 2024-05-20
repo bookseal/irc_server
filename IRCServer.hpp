@@ -4,8 +4,10 @@
 #include <netinet/in.h>
 #include <poll.h>
 #include <sys/socket.h>
+#include <termios.h>
 #include <unistd.h>
 
+#include <csignal>
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
@@ -38,6 +40,8 @@ class IRCServer {
                          const std::string& recipientNickname,
                          const std::string& message);
   const std::string getPassword() const;
+  static void handleSigtstp(int signum);
+  static void handleSigcont(int signum);
 
  private:
   const int port;  // 큰 빌딩의 사무실 번호 (RC 서버가 포트 6667에 바인드 됩.
@@ -48,6 +52,7 @@ class IRCServer {
   std::map<int, ClientHandler*> clientHandlers;
   std::map<std::string, ClientHandler*> activeNicknames;
   std::map<std::string, Channel*> channels;
+  static struct termios orig_termios;  // 터미널 상태를 저장
 };
 
 #endif

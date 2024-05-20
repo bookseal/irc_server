@@ -13,7 +13,13 @@ int main(int argc, char **argv) {
     std::cout << "Invalid port or password." << std::endl;
     return 1;
   }
-  IRCServer server(port, password);
-  server.run();
+
+  try {
+    IRCServer server(port, password);
+    server.run();
+  } catch (std::exception &e) {
+    std::cerr << e.what() << std::endl;
+    exit(EXIT_FAILURE);
+  }
   return 0;
 }
