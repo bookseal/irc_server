@@ -66,6 +66,8 @@ class ClientHandler {
   IRCServer* server;
   int clientSocket;
   bool active;
+  bool isPassed;
+  bool isWelcomed;
   std::string nickname;
   std::string username;
   std::string hostname;
