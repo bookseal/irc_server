@@ -15,6 +15,7 @@ void ClientHandler::processInput() {
   const size_t bufferSize = 1024;
   char buffer[bufferSize];
   static std::string accumulatedInput;
+  std::string command;
 
   ssize_t bytesRead = read(clientSocket, buffer, sizeof(buffer) - 1);
 
@@ -24,7 +25,12 @@ void ClientHandler::processInput() {
 
     size_t pos = 0;
     while ((pos = accumulatedInput.find("\n")) != std::string::npos) {
-      std::string command = accumulatedInput.substr(0, pos - 1);
+
+        if (pos > 0 && accumulatedInput[pos - 1] != '\r'){
+            command = accumulatedInput.substr(0, pos);
+        }
+        else
+            command = accumulatedInput.substr(0, pos - 1);
       std::cout << "Received : " << command << "$" << std::endl;
       processCommand(command);
       accumulatedInput.erase(0, pos + 1);
