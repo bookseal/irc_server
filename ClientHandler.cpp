@@ -99,7 +99,8 @@ void ClientHandler::parseCommand(const std::string& command,
       handleModeCommand(parameters);
     } else if (command == "PING") {
       sendMessage(":Server PONG Server :Server");
-    } else if (command == "CAP" || command == "WHOIS" || command == "WHO" || command == "PASS") {
+    } else if (command == "CAP" || command == "WHOIS" || command == "WHO" ||
+               command == "PASS") {
       ;
     } else if (command == "KICK") {
       handleKickCommand(parameters);
@@ -107,8 +108,8 @@ void ClientHandler::parseCommand(const std::string& command,
       handleInviteCommand(parameters);
     } else if (command == "TOPIC") {
       handleTopicCommand(parameters);
-		} else if (command == "QUIT") {
-			handleDisconnect();
+    } else if (command == "QUIT") {
+      handleDisconnect();
     } else {
       defaultMessageHandling(command + " " + parameters);
     }
@@ -307,7 +308,7 @@ bool ClientHandler::joinChannel(Channel* channel,
                   " :Cannot join channel (+i) - invite only");
       return false;
     }
-  } else if (channel->checkPassword(password)) {
+  } else if (!channel->hasPassword() || channel->checkPassword(password)) {
     channel->addClient(this);
     channels.insert(channelName);
     broadcastJoinMessage(channel, channelName);
