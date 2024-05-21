@@ -263,6 +263,7 @@ void ClientHandler::handleJoinCommand(const std::string& parameters) {
   }
 
   Channel* channel = getOrCreateChannel(channelName);
+
   if (channel) {
     if (joinChannel(channel, channelName, password)) {
     }
