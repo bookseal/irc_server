@@ -53,9 +53,11 @@ void Channel::setMode(const std::string& mode, ClientHandler* operatorHandler) {
   } else if (modeFlag == "-l") {
     setLimit(0, operatorHandler);
   } else if (modeFlag == "+o") {
-    setOperatorMode(true, mode.substr(3), operatorHandler);
+    if (mode.length() > 2)
+      setOperatorMode(true, mode.substr(3), operatorHandler);
   } else if (modeFlag == "-o") {
-    setOperatorMode(false, mode.substr(3), operatorHandler);
+    if (mode.length() > 2)
+      setOperatorMode(false, mode.substr(3), operatorHandler);
   }
 }
 
