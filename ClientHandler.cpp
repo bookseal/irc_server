@@ -99,7 +99,7 @@ void ClientHandler::parseCommand(const std::string& command,
       handleModeCommand(parameters);
     } else if (command == "PING") {
       sendMessage(":Server PONG Server :Server");
-    } else if (command == "CAP" || command == "WHOIS" || command == "WHO") {
+    } else if (command == "CAP" || command == "WHOIS" || command == "WHO" || command == "PASS") {
       ;
     } else if (command == "KICK") {
       handleKickCommand(parameters);
@@ -107,8 +107,6 @@ void ClientHandler::parseCommand(const std::string& command,
       handleInviteCommand(parameters);
     } else if (command == "TOPIC") {
       handleTopicCommand(parameters);
-    } else if (command == "PASS") {
-      handlePassCommand(parameters);
 		} else if (command == "QUIT") {
 			handleDisconnect();
     } else {
@@ -485,8 +483,6 @@ void ClientHandler::handleDisconnect() {
     }
   }
   deactivate();
-  close(clientSocket);
-  // this->server->cleanUpInactiveHandlers();
 }
 
 void ClientHandler::sendMessage(const std::string& message) {
