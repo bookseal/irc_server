@@ -219,6 +219,8 @@ void IRCServer::cleanUpInactiveHandlers() {
       std::cout << "Cleaning up client handler for socket: " << it->first
                 << std::endl;
       close(it->first);   // Close the socket
+
+
       delete it->second;  // Delete the handler
       std::map<int, ClientHandler*>::iterator temp =
           it;  // 임시 이터레이터를 사용하여

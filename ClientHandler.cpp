@@ -4,7 +4,11 @@
 #include "IRCServer.hpp"
 
 ClientHandler::ClientHandler(int socket, IRCServer* server)
-    : server(server), clientSocket(socket), active(true), isPassed(false), isWelcomed(false) {}
+    : server(server),
+      clientSocket(socket),
+      active(true),
+      isPassed(false),
+      isWelcomed(false) {}
 
 ClientHandler::~ClientHandler() {
   server->unregisterNickname(nickname);
@@ -16,7 +20,6 @@ void ClientHandler::processInput() {
   char buffer[bufferSize];
   static std::string accumulatedInput;
   std::string command;
-
   ssize_t bytesRead = read(clientSocket, buffer, sizeof(buffer) - 1);
 
   if (bytesRead > 0) {
@@ -25,15 +28,12 @@ void ClientHandler::processInput() {
 
     size_t pos = 0;
     while ((pos = accumulatedInput.find("\n")) != std::string::npos) {
-
-        if (pos > 0 && accumulatedInput[pos - 1] != '\r'){
-            command = accumulatedInput.substr(0, pos);
-        }
-        else
-            command = accumulatedInput.substr(0, pos - 1);
+      if (pos > 0 && accumulatedInput[pos - 1] != '\r') {
+        command = accumulatedInput.substr(0, pos);
+      } else
+        command = accumulatedInput.substr(0, pos - 1);
       std::cout << "Received : " << command << "$" << std::endl;
       processCommand(command);
-      // TODO: check \r
       accumulatedInput.erase(0, pos + 1);
     }
   } else if (bytesRead == 0) {
@@ -68,53 +68,53 @@ void ClientHandler::processCommand(const std::string& fullCommand) {
 
 void ClientHandler::parseCommand(const std::string& command,
                                  const std::string& parameters) {
-    if (!isPassed || !isWelcomed) {
-        if (command == "NICK") {
-            handleNickCommand(parameters);
-        } else if (command == "USER") {
-            handleUserCommand(parameters);
-        } else if (command == "PASS") {
-            handlePassCommand(parameters);
-        }
-        else if (command == "JOIN" && parameters == ":") {
-            sendMessage(":Server 451 * JOIN :You have not registered.");
-        }
-        if (isPassed && !nickname.empty() && !username.empty() && !hostname.empty()){
-            sendMessage(":Server 001 " + nickname + " :Welcome to the server, " +
-                        nickname + "!");
-            isWelcomed = true;
-        }
+  if (!isPassed || !isWelcomed) {
+    if (command == "NICK") {
+      handleNickCommand(parameters);
+    } else if (command == "USER") {
+      handleUserCommand(parameters);
+    } else if (command == "PASS") {
+      handlePassCommand(parameters);
+    } else if (command == "JOIN" && parameters == ":") {
+      sendMessage(":Server 451 * JOIN :You have not registered.");
     }
-    else {
-        if (command == "NICK") {
-            handleNickCommand(parameters);
-        } else if (command == "USER") {
-            handleUserCommand(parameters);
-        } else if (command == "JOIN") {
-            handleJoinCommand(parameters);
-        } else if (command == "PART") {
-            handleLeaveCommand(parameters);
-        } else if (command == "PRIVMSG") {
-            handlePrivMsgCommand(parameters);
-        } else if (command == "MODE") {
-            handleModeCommand(parameters);
-        } else if (command == "PING") {
-            sendMessage(":Server PONG Server :Server");
-        } else if (command == "CAP" || command == "WHOIS") {
-            ;
-        } else if (command == "KICK") {
-            handleKickCommand(parameters);
-        } else if (command == "INVITE") {
-            handleInviteCommand(parameters);
-        } else if (command == "TOPIC") {
-            handleTopicCommand(parameters);
-        } else if (command == "PASS") {
-            handlePassCommand(parameters);
-        } else {
-            defaultMessageHandling(command + " " + parameters);
-        }
+    if (isPassed && !nickname.empty() && !username.empty() &&
+        !hostname.empty()) {
+      sendMessage(":Server 001 " + nickname + " :Welcome to the server, " +
+                  nickname + "!");
+      isWelcomed = true;
     }
-
+  } else {
+    if (command == "NICK") {
+      handleNickCommand(parameters);
+    } else if (command == "USER") {
+      handleUserCommand(parameters);
+    } else if (command == "JOIN") {
+      handleJoinCommand(parameters);
+    } else if (command == "PART") {
+      handleLeaveCommand(parameters);
+    } else if (command == "PRIVMSG") {
+      handlePrivMsgCommand(parameters);
+    } else if (command == "MODE") {
+      handleModeCommand(parameters);
+    } else if (command == "PING") {
+      sendMessage(":Server PONG Server :Server");
+    } else if (command == "CAP" || command == "WHOIS" || command == "WHO") {
+      ;
+    } else if (command == "KICK") {
+      handleKickCommand(parameters);
+    } else if (command == "INVITE") {
+      handleInviteCommand(parameters);
+    } else if (command == "TOPIC") {
+      handleTopicCommand(parameters);
+    } else if (command == "PASS") {
+      handlePassCommand(parameters);
+		} else if (command == "QUIT") {
+			handleDisconnect();
+    } else {
+      defaultMessageHandling(command + " " + parameters);
+    }
+  }
 }
 
 void ClientHandler::handleModeCommand(const std::string& parameters) {
@@ -163,8 +163,7 @@ void ClientHandler::handlePrivMsgCommand(const std::string& parameters) {
   std::string message = parameters.substr(spacePos + 2);
   if (!target.empty() && target[0] == '#') {
     handleChannelMessage(target, message);
-  }
-  else if (message.find(".DCC SEND") != std::string::npos) {
+  } else if (message.find(".DCC SEND") != std::string::npos) {
     handleFileTransferMessage(target, message);
   } else {
     server->sendMessageToUser(nickname, target, message);
@@ -241,8 +240,7 @@ void ClientHandler::handleUserCommand(const std::string& parameters) {
   }
   username = userParams[0];
   hostname = userParams[2];
-    sendMessage(":Server 302 " + nickname + " :");
-
+  sendMessage(":Server 302 " + nickname + " :");
 }
 
 void ClientHandler::handleJoinCommand(const std::string& parameters) {
@@ -395,15 +393,19 @@ void ClientHandler::handleKickCommand(const std::string& parameters) {
 }
 
 void ClientHandler::handleTopicCommand(const std::string& parameters) {
-    size_t spacePos = parameters.find(' ');
-    std::string channelName = (spacePos != std::string::npos) ? parameters.substr(0, spacePos) : parameters;
-    std::string newTopic = (spacePos != std::string::npos) ? parameters.substr(spacePos + 1) : "";
-    
-    Channel* channel = server->findChannel(channelName);
-    if (!channel) {
-        sendMessage(":Server 403 " + nickname + " " + channelName + " :No such channel");
-        return;
-    }
+  size_t spacePos = parameters.find(' ');
+  std::string channelName = (spacePos != std::string::npos)
+                                ? parameters.substr(0, spacePos)
+                                : parameters;
+  std::string newTopic =
+      (spacePos != std::string::npos) ? parameters.substr(spacePos + 1) : "";
+
+  Channel* channel = server->findChannel(channelName);
+  if (!channel) {
+    sendMessage(":Server 403 " + nickname + " " + channelName +
+                " :No such channel");
+    return;
+  }
 
   if (!channel->isClientMember(this)) {
     sendMessage(":Server 442 " + channelName + " :You're not on that channel");
@@ -468,8 +470,9 @@ void ClientHandler::handlePassCommand(const std::string& parameters) {
                 "@" + hostname + ") [Access denied by configuration]");
 
     handleDisconnect();
+  } else {
+    isPassed = true;
   }
-  isPassed = true;
 }
 
 void ClientHandler::handleDisconnect() {
@@ -482,6 +485,8 @@ void ClientHandler::handleDisconnect() {
     }
   }
   deactivate();
+  close(clientSocket);
+  // this->server->cleanUpInactiveHandlers();
 }
 
 void ClientHandler::sendMessage(const std::string& message) {

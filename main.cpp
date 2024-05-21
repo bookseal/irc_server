@@ -18,7 +18,6 @@ int main(int argc, char **argv) {
     IRCServer server(port, password);
     server.run();
   } catch (std::exception &e) {
-    std::cerr << e.what() << std::endl;
     exit(EXIT_FAILURE);
   }
   return 0;
