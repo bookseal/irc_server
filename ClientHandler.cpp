@@ -374,7 +374,6 @@ void ClientHandler::handleKickCommand(const std::string& parameters) {
     return;
   }
   ClientHandler* target = server->findClientHandlerByNickname(targetName);
-
   if (!channel->isOperator(this)) {
     sendMessage("Server ERROR :You are not an operator in channel " +
                 channelName + "\r\n");
@@ -385,6 +384,7 @@ void ClientHandler::handleKickCommand(const std::string& parameters) {
     sendMessage(message);
     channel->broadcastMessage(message, this);
     channel->removeClient(target);
+    channel->removeInvitation(target);
     target->eraseChannel(channel);
   } else {
     sendMessage("Server ERROR :" + targetName + " is not on channel " +
@@ -482,6 +482,7 @@ void ClientHandler::handleDisconnect() {
     Channel* channel = server->findChannel(channelName);
     if (channel) {
       channel->removeClient(this);
+      channel->removeInvitation(this);
     }
   }
   deactivate();

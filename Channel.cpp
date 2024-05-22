@@ -23,30 +23,32 @@ void Channel::setMode(const std::string& mode, ClientHandler* operatorHandler) {
   } else if (modeFlag == "+k") {
     if (mode.length() > 2) {
       std::string password = mode.substr(3);
-      if (!password.empty())
-        setPasswordMode(password, operatorHandler);
-    }
-    else
-      operatorHandler->sendMessage(":Server 461 " + operatorHandler->getNickname() + " " + name + " :Not enough parameters");
+      if (!password.empty()) setPasswordMode(password, operatorHandler);
+    } else
+      operatorHandler->sendMessage(":Server 461 " +
+                                   operatorHandler->getNickname() + " " + name +
+                                   " :Not enough parameters");
   } else if (modeFlag == "-k" && hasPassword()) {
     removePasswordMode(operatorHandler);
   } else if (modeFlag == "+l") {
-     if (mode.length() > 2) {  // Check if there are more characters after "+l"
-        std::string limit = mode.substr(3);  // Get the limit following "+l"
-        int limitValue = 0;
-        bool valid = true;
-        for (size_t i = 0; i < limit.length(); ++i) {
-            if (!isdigit(limit[i])) {
-                valid = false;
-                break;
-            }
-            limitValue = limitValue * 10 + (limit[i] - '0');
+    if (mode.length() > 2) {  // Check if there are more characters after "+l"
+      std::string limit = mode.substr(3);  // Get the limit following "+l"
+      int limitValue = 0;
+      bool valid = true;
+      for (size_t i = 0; i < limit.length(); ++i) {
+        if (!isdigit(limit[i])) {
+          valid = false;
+          break;
         }
-        if (valid && limitValue > 0) {
-            setLimit(limitValue, operatorHandler);
-        } else {
-            operatorHandler->sendMessage(":Server 473 " + operatorHandler->getNickname() + " :Channel limit must be a number greater than 0.");
-        }
+        limitValue = limitValue * 10 + (limit[i] - '0');
+      }
+      if (valid && limitValue > 0) {
+        setLimit(limitValue, operatorHandler);
+      } else {
+        operatorHandler->sendMessage(
+            ":Server 473 " + operatorHandler->getNickname() +
+            " :Channel limit must be a number greater than 0.");
+      }
     }
   } else if (modeFlag == "-l") {
     setLimit(0, operatorHandler);
@@ -199,8 +201,6 @@ void Channel::removeOperator(ClientHandler* client) {
   }
 }
 
-
-
 void Channel::broadcastMessage(const std::string& message,
                                ClientHandler* sender) {
   std::map<ClientHandler*, bool>::iterator it;
@@ -236,24 +236,23 @@ const std::string& Channel::getTopicSetter() const { return topicSetter; }
 // std::time_t Channel::getTopicTimestamp() const { return topicTimestamp; }
 
 void Channel::setTopic(const std::string& newTopic, const std::string& setter) {
-    topic = newTopic;
-    topicSetter = setter;
-    std::string topicMessage = ":" + setter + " TOPIC " + name + " :" + newTopic;
+  topic = newTopic;
+  topicSetter = setter;
+  std::string topicMessage = ":" + setter + " TOPIC " + name + " :" + newTopic;
 }
 
 bool Channel::getTopicControl() const { return topicControl; }
 
-bool Channel::checkInvitation(ClientHandler *client) {
-    std::cout << "Checking invitation for " << client->getNickname() << std::endl;
-    std::cout << "Invited size: " << invited.size() << std::endl;
-    std::cout << "Invited contains client: " << (invited.find(client) != invited.end()) << std::endl;
-    return invited.find(client) != invited.end();
+bool Channel::checkInvitation(ClientHandler* client) {
+  std::cout << "Checking invitation for " << client->getNickname() << std::endl;
+  std::cout << "Invited size: " << invited.size() << std::endl;
+  std::cout << "Invited contains client: "
+            << (invited.find(client) != invited.end()) << std::endl;
+  return invited.find(client) != invited.end();
 }
-void Channel::inviteClient(ClientHandler *client){
-    invited.insert(client);
-}
-void Channel::removeInvitation(ClientHandler *client){
-    if (invited.find(client) != invited.end()) {
-        invited.erase(client);
-    }
+void Channel::inviteClient(ClientHandler* client) { invited.insert(client); }
+void Channel::removeInvitation(ClientHandler* client) {
+  if (invited.find(client) != invited.end()) {
+    invited.erase(client);
+  }
 }
