@@ -47,8 +47,6 @@ void Channel::setMode(const std::string& mode, ClientHandler* operatorHandler) {
         } else {
             operatorHandler->sendMessage(":Server 473 " + operatorHandler->getNickname() + " :Channel limit must be a number greater than 0.");
         }
-    } else {
-        setLimit(0, operatorHandler); // 제한을 0으로 둬서 -l 효과가 됨.
     }
   } else if (modeFlag == "-l") {
     setLimit(0, operatorHandler);
